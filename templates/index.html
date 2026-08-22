@@ -8,7 +8,9 @@
   <!-- ═══ Hero ═══════════════════════════════════════════════════════════ -->
   <section class="hero">
     <div class="hero-eyebrow">
-      👻 &nbsp; Institutional Memory Engine
+      <span class="eyebrow-ghost">👻</span>
+      <span class="eyebrow-title">CAMPUS SURVIVAL ARCHIVE</span>
+      <span class="eyebrow-pill">WHAT SENIORS LEFT BEHIND</span>
     </div>
 
     <h1 class="hero-title">
@@ -123,6 +125,103 @@
       <button type="submit" class="search-btn" id="home-search-btn">Ask →</button>
     </form>
   </section>
+
+  <!-- ═══ Questions Students Are Asking ══════════════════════════════════ -->
+  <section style="padding: 0 0 3.5rem;">
+
+    <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:1.5rem; flex-wrap:wrap; gap:0.5rem;">
+      <div>
+        <span style="font-family:'Space Mono',monospace; font-size:0.65rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--purple-400); display:block; margin-bottom:0.375rem;">👻 The Unwritten Syllabus</span>
+        <h2 style="margin:0; font-size:clamp(1.375rem, 3vw, 1.875rem);">What nobody tells you until it's too late.</h2>
+      </div>
+      <a href="/search" class="btn btn-ghost btn-sm" id="popular-see-all" style="flex-shrink:0;">Ask your own →</a>
+    </div>
+
+    <div class="popular-questions-grid" id="popular-questions-grid">
+
+      <a href="/results?q=how+does+professor+grade+assignments+and+what+does+he+look+for" class="pq-card" id="pq-1">
+        <div class="pq-top">
+          <span class="pq-tag pq-tag-prof">👨‍🏫 Professor</span>
+          <span class="pq-arrow">→</span>
+        </div>
+        <p class="pq-question">"How do professors actually grade assignments — and what do they secretly look for?"</p>
+        <span class="pq-hint">Seniors know the formula</span>
+      </a>
+
+      <a href="/results?q=is+the+lab+equipment+reliable+and+what+to+watch+out+for" class="pq-card" id="pq-2">
+        <div class="pq-top">
+          <span class="pq-tag pq-tag-lab">🧪 Lab</span>
+          <span class="pq-arrow">→</span>
+        </div>
+        <p class="pq-question">"Is the lab equipment actually reliable, or are there things that always break?"</p>
+        <span class="pq-hint">2 seniors warned about this</span>
+      </a>
+
+      <a href="/results?q=when+does+student+portal+crash+registration+tips" class="pq-card" id="pq-3">
+        <div class="pq-top">
+          <span class="pq-tag pq-tag-campus">🏫 Campus</span>
+          <span class="pq-arrow">→</span>
+        </div>
+        <p class="pq-question">"When does the student portal crash and how do you register before it goes down?"</p>
+        <span class="pq-hint">Critical timing info inside</span>
+      </a>
+
+      <a href="/results?q=how+to+prepare+for+exams+what+actually+comes+in+the+paper" class="pq-card" id="pq-4">
+        <div class="pq-top">
+          <span class="pq-tag pq-tag-exam">📚 Exams</span>
+          <span class="pq-arrow">→</span>
+        </div>
+        <p class="pq-question">"What actually comes in the exam — and how do seniors study differently than juniors?"</p>
+        <span class="pq-hint">Past paper patterns revealed</span>
+      </a>
+
+      <a href="/results?q=how+strict+is+attendance+and+what+happens+if+you+miss+class" class="pq-card" id="pq-5">
+        <div class="pq-top">
+          <span class="pq-tag pq-tag-prof">👨‍🏫 Attendance</span>
+          <span class="pq-arrow">→</span>
+        </div>
+        <p class="pq-question">"How strict is attendance, really? And what happens when you miss too many?"</p>
+        <span class="pq-hint">Seniors found out the hard way</span>
+      </a>
+
+      <a href="/results?q=hostel+wifi+which+block+best+internet+connection" class="pq-card" id="pq-6">
+        <div class="pq-top">
+          <span class="pq-tag pq-tag-campus">🏫 Hostel</span>
+          <span class="pq-arrow">→</span>
+        </div>
+        <p class="pq-question">"Which hostel block has the best wifi — and when does it actually die on you?"</p>
+        <span class="pq-hint">Location matters more than you think</span>
+      </a>
+
+      <a href="/results?q=how+to+get+extension+on+assignment+deadline+from+professor" class="pq-card" id="pq-7">
+        <div class="pq-top">
+          <span class="pq-tag pq-tag-exam">📝 Deadlines</span>
+          <span class="pq-arrow">→</span>
+        </div>
+        <p class="pq-question">"Can you actually get a deadline extension — and what's the right way to ask?"</p>
+        <span class="pq-hint">There's a specific way to do it</span>
+      </a>
+
+      <a href="/results?q=free+access+to+research+papers+journals+student+resources" class="pq-card" id="pq-8">
+        <div class="pq-top">
+          <span class="pq-tag pq-tag-lab">📖 Resources</span>
+          <span class="pq-arrow">→</span>
+        </div>
+        <p class="pq-question">"How do you access IEEE and research papers for free with a student ID?"</p>
+        <span class="pq-hint">Most students don't know this exists</span>
+      </a>
+
+    </div>
+
+    <div style="text-align:center; margin-top:1.5rem;">
+      <p style="color:var(--text-muted); font-size:0.8125rem; font-family:'Space Mono',monospace; letter-spacing:0.04em;">
+        These are questions seniors have already answered. Click any to hear from them.
+      </p>
+    </div>
+
+  </section>
+
+
 
   <!-- ═══ Knowledge Gaps callout ══════════════════════════════════════════ -->
   {% if stats.gap_count > 0 %}
