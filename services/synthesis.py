@@ -94,23 +94,25 @@ Instructions:
 1. If the provided Echoes do NOT contain real information to answer the student's question (e.g. if the question is unrelated, off-topic, or asks about concepts never mentioned in the memories), reply EXACTLY with:
 "No seniors have shared memories answering this specific question yet. This query has been added to our Knowledge Gaps tracker."
 2. Otherwise, write a concise, helpful 2 to 4 sentence synthesis of what these seniors advise.
-3. Be direct, practical, and factual to the provided memories only. Do not hallucinate external facts."""
+3. Language & Tone: Match the language of the student's question naturally (English, Hinglish, or Hindi). If asked in Hinglish (e.g. "teacher kaun hai", "attendance kitni chahiye"), reply in natural, clear Hinglish or English.
+4. Be direct, practical, and factual to the provided memories only. Do not hallucinate external facts."""
 
-    # 1. Try Gemini first (fast & reliable)
+    # 1. Try Gemini first (fast & multilingual)
     if Config.GEMINI_API_KEY:
-        try:
-            from google import genai
-            client = genai.Client(api_key=Config.GEMINI_API_KEY)
-            res = client.models.generate_content(
-                model="gemini-3.6-flash",
-                contents=prompt,
-            )
-            if res and res.text:
-                return {"answer": res.text.strip(), "source": "llm", "echo_count": n}
-        except Exception as exc:
-            print(f"[Synthesis] Gemini LLM failed: {exc}")
+        for model in ["gemini-3.1-flash-lite", "gemini-3.6-flash"]:
+            try:
+                from google import genai
+                client = genai.Client(api_key=Config.GEMINI_API_KEY)
+                res = client.models.generate_content(
+                    model=model,
+                    contents=prompt,
+                )
+                if res and res.text:
+                    return {"answer": res.text.strip(), "source": "llm", "echo_count": n}
+            except Exception as exc:
+                print(f"[Synthesis] Gemini LLM ({model}) failed: {exc}")
 
-    # 2. Try Groq LLM
+    # 2. Try Groq LLM (groq/compound-mini)
     if Config.GROQ_API_KEY:
         try:
             from groq import Groq
@@ -119,13 +121,18 @@ Instructions:
                 model=Config.GROQ_LLM_MODEL,
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=300,
-                temperature=0.4,
+                temperature=0.3,
             )
-            answer = response.choices[0].message.content.strip()
-            return {"answer": answer, "source": "llm", "echo_count": n}
+            raw_answer = response.choices[0].message.content.strip()
+            # Clean think tags if any
+            import re
+            clean_answer = re.sub(r"<think>[\s\S]*?(<\/think>|$)", "", raw_answer, flags=re.IGNORECASE).strip()
+            if clean_answer:
+                return {"answer": clean_answer, "source": "llm", "echo_count": n}
         except Exception as exc:
             print(f"[Synthesis] Groq LLM failed: {exc}")
 
     # 3. Template fallback (pure offline math & formatting)
     answer = _template_synthesis(question, top_echoes)
     return {"answer": answer, "source": "template", "echo_count": n}
+

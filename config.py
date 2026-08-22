@@ -33,7 +33,8 @@ class Config:
 
     # Groq models
     GROQ_WHISPER_MODEL = "whisper-large-v3-turbo"
-    GROQ_LLM_MODEL = "openai/gpt-oss-20b"
+    GROQ_LLM_MODEL = "groq/compound-mini"
 
-    # Gemini embedding model
+    # Gemini models (multilingual + high free quota)
+    GEMINI_LLM_MODEL = "gemini-3.1-flash-lite"
     GEMINI_EMBEDDING_MODEL = "gemini-embedding-001"

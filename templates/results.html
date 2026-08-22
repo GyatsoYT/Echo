@@ -116,13 +116,32 @@
           {% if echo.topic_tag %}
           <span class="tag tag-topic">{{ echo.topic_tag }}</span>
           {% endif %}
+          {% if echo.source == 'whatsapp' %}
+          <span class="tag" style="background: rgba(37,211,102,0.15); color: #25d366; border: 1px solid rgba(37,211,102,0.3); font-size: 0.65rem;">💬 WhatsApp</span>
+          {% elif echo.source == 'reddit' %}
+          <span class="tag" style="background: rgba(255,69,0,0.12); color: #ff4500; border: 1px solid rgba(255,69,0,0.3); font-size: 0.65rem;">🔴 Reddit</span>
+          {% endif %}
+          {% if echo.health and echo.health.cross_group_label %}
+          <span class="tag" style="background: rgba(124,58,237,0.18); color: #a78bfa; border: 1px solid rgba(124,58,237,0.4); font-size: 0.65rem;" title="{{ echo.health.group_names | join(', ') }}">{{ echo.health.cross_group_label }}</span>
+          {% endif %}
         </div>
         {% if echo.health %}
-        <span class="health-badge health-{{ echo.health.status }}" title="{{ echo.health.days_old }} days old">
+        <span class="health-badge health-{{ echo.health.status }}" id="health-badge-{{ echo.id }}" title="{{ echo.health.days_old }} days old">
           {{ echo.health.label }}
         </span>
         {% endif %}
       </div>
+
+      {% if echo.health and echo.health.is_whatsapp_stale %}
+      <div class="stale-whatsapp-box" id="stale-box-{{ echo.id }}" style="margin-bottom: 0.75rem; padding: 0.5rem 0.75rem; background: rgba(245,158,11,0.1); border-left: 3px solid #f59e0b; border-radius: 0 4px 4px 0; font-size: 0.76rem; color: #fbbf24; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap;">
+        <span>⚠️ {{ echo.health.stale_warning }}</span>
+        <button type="button" class="btn btn-secondary btn-sm reverify-btn" data-echo-id="{{ echo.id }}" style="font-size: 0.7rem; padding: 0.2rem 0.5rem; background: rgba(245,158,11,0.2); border-color: #f59e0b; color: #fef3c7; cursor: pointer;">Mark as Still True ✓</button>
+      </div>
+      {% endif %}
+
+      {% if echo.question_context %}
+      <p style="font-size: 0.78rem; color: var(--text-muted); font-style: italic; margin-bottom: 0.5rem; padding: 0.4rem 0.6rem; background: rgba(255,255,255,0.04); border-left: 2px solid rgba(37,211,102,0.4); border-radius: 0 4px 4px 0;">Q: {{ echo.question_context | truncate(80, True, '…') }}</p>
+      {% endif %}
 
       <!-- Quote (first sentence) + full transcript -->
       <p class="ghost-quote">"{{ echo.transcript | truncate(120, True, '…') }}"</p>

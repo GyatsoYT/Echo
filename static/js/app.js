@@ -446,6 +446,7 @@ function initEchoFilters() {
     lab: (el) => el.dataset.topic.includes('lab') || el.dataset.course.includes('lab'),
     campus: (el) => ['hostel','campus','wifi','portal','library'].some(t =>
       el.dataset.course.includes(t) || el.dataset.topic.includes(t)),
+    whatsapp: (el) => el.dataset.source === 'whatsapp',
   };
 
   // Filter pills
@@ -478,8 +479,105 @@ function initEchoFilters() {
   });
 }
 
+// ── Live Feed: poll for new WhatsApp echoes ───────────────────────────────────
+
+let _liveFeedLastId = null;
+
+function initLiveFeed() {
+  // Only run on pages with a stats bar or echoes grid (home + echoes pages)
+  const hasStats = document.querySelector('.stats-bar, .echoes-grid');
+  if (!hasStats) return;
+
+  async function checkFeed() {
+    try {
+      const res = await fetch('/api/echoes/recent');
+      if (!res.ok) return;
+      const echoes = await res.json();
+      if (!echoes || echoes.length === 0) return;
+
+      const newest = echoes[0];
+      if (_liveFeedLastId === null) {
+        // First poll — just record latest id, don't alert
+        _liveFeedLastId = newest.id;
+        return;
+      }
+
+      if (newest.id !== _liveFeedLastId) {
+        _liveFeedLastId = newest.id;
+        // Show toast for new entries
+        const src = newest.source === 'whatsapp' ? '💬 WhatsApp' : newest.source === 'reddit' ? '🔴 Reddit' : '🎙 Web';
+        const shortTranscript = (newest.transcript || '').slice(0, 60);
+        showAlert(
+          `New Echo captured via ${src}: "${shortTranscript}..." — <a href="/echoes" style="color:inherit;text-decoration:underline;">View it</a>`,
+          'success'
+        );
+
+        // Refresh stat counters on home page
+        const statsRes = await fetch('/api/stats');
+        if (statsRes.ok) {
+          const stats = await statsRes.json();
+          const echoCountEl = document.querySelector('.stat-value[data-count]');
+          if (echoCountEl) {
+            echoCountEl.dataset.count = stats.total_echoes;
+            echoCountEl.textContent = stats.total_echoes;
+          }
+        }
+      }
+    } catch (e) {
+      // Silently ignore network errors
+    }
+  }
+
+  // Initial check + poll every 8 seconds
+  checkFeed();
+  setInterval(checkFeed, 8000);
+}
+
 // ── Hero chips → search navigation ───────────────────────────────────────────
 // (Handled inline via href="/results?q=..." in index.html, no JS needed)
+
+// ── Re-verify stale Echo button ───────────────────────────────────────────────
+
+function initReverifyButtons() {
+  document.querySelectorAll('.reverify-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const echoId = btn.dataset.echoId;
+      if (!echoId) return;
+
+      btn.disabled = true;
+      btn.textContent = 'Verifying…';
+
+      try {
+        const res = await fetch(`/api/echoes/${echoId}/reverify`, { method: 'POST' });
+        const data = await res.json();
+        if (res.ok && data.status === 'reverified') {
+          showAlert('✓ Echo re-verified! Freshness score boosted.', 'success');
+          const badge = document.getElementById(`health-badge-${echoId}`);
+          if (badge && data.health) {
+            badge.className = `health-badge health-${data.health.status}`;
+            badge.textContent = data.health.label;
+          }
+          const box = document.getElementById(`stale-box-${echoId}`);
+          if (box) {
+            box.style.opacity = '0';
+            box.style.transform = 'scale(0.95)';
+            box.style.transition = 'all 0.3s ease';
+            setTimeout(() => box.remove(), 300);
+          }
+        } else {
+          showAlert(data.error || 'Could not verify Echo.', 'error');
+          btn.disabled = false;
+          btn.textContent = 'Mark as Still True ✓';
+        }
+      } catch (err) {
+        showAlert('Network error verifying Echo.', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Mark as Still True ✓';
+      }
+    });
+  });
+}
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 
@@ -495,6 +593,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initRecordingUI();
   initEchoFilters();
   initScrollAnimations();
+  initLiveFeed();
+  initReverifyButtons();
 
   // Animate stat counters
   document.querySelectorAll('.stat-value[data-count]').forEach(el => {
@@ -516,3 +616,4 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 });
+

@@ -37,6 +37,170 @@ def api_stats():
     return jsonify(stats), 200
 
 
+# ── WhatsApp bot endpoint: POST /api/ghosts ─────────────────────────────────
+
+@admin_bp.route("/api/ghosts", methods=["POST"])
+def api_create_ghost():
+    """
+    JSON endpoint for the Baileys WhatsApp bot.
+    Accepts a Q&A pair captured from WhatsApp and saves it as an Echo.
+    Performs automatic cross-group deduplication.
+    """
+    data = request.get_json(force=True, silent=True)
+    if not data:
+        return jsonify({"error": "Invalid JSON body"}), 400
+
+    transcript = (data.get("transcript") or "").strip()
+    question_context = (data.get("question_context") or "").strip()
+    course_tag = (data.get("course_tag") or "general").strip()
+    source = (data.get("source") or "web").strip()
+    group_name = (data.get("group_name") or "").strip()
+
+    if not transcript:
+        return jsonify({"error": "transcript is required"}), 400
+    if len(transcript) < 12:
+        return jsonify({"error": "transcript too short to be meaningful"}), 400
+
+    try:
+        embedding = embed_text(transcript)
+    except Exception as e:
+        return jsonify({"error": f"Embedding failed: {str(e)}"}), 500
+
+    # Cross-group deduplication: check if an existing Echo has very high similarity (>= 0.85)
+    from routes.echoes import _check_near_duplicate
+    dup_id = _check_near_duplicate(embedding, course_tag, threshold=0.85)
+    if not dup_id and course_tag.lower() == "general":
+        # Check globally for general advice
+        dup_id = _check_near_duplicate(embedding, "general", threshold=0.85)
+
+    if dup_id:
+        from database.db import increment_confirmation
+        stats = increment_confirmation(dup_id, group_name=group_name)
+        print(f"[API] Cross-group duplicate found! Echo #{dup_id} confirmation bumped to {stats['confirmations']} across {stats['group_count']} groups")
+        return jsonify({
+            "status": "confirmed",
+            "echo_id": dup_id,
+            "group_count": stats["group_count"],
+            "group_names": stats["group_names"],
+            "confirmations": stats["confirmations"],
+            "message": f"Cross-group consensus detected! Confirmed in {stats['group_count']} groups.",
+        }), 200
+
+    try:
+        echo_id = insert_echo(
+            course_tag=course_tag,
+            professor_tag="",
+            topic_tag="whatsapp-capture",
+            transcript=transcript,
+            audio_path="",
+            embedding=embedding,
+            source=source,
+            question_context=question_context,
+            group_name=group_name,
+        )
+    except Exception as e:
+        return jsonify({"error": f"DB insert failed: {str(e)}"}), 500
+
+    print(f"[API] WhatsApp Ghost saved: echo_id={echo_id}, course={course_tag}, source={source}, group={group_name}")
+    return jsonify({
+        "status": "created",
+        "echo_id": echo_id,
+        "group_name": group_name,
+        "message": "Echo captured from WhatsApp and saved!",
+    }), 201
+
+
+# ── Silent Confidence Confirmation: POST /api/ghosts/confirm ────────────────
+
+@admin_bp.route("/api/ghosts/confirm", methods=["POST"])
+def api_confirm_ghost():
+    """
+    Called when users react (👍, +1, "same", "vouch") in WhatsApp.
+    Increments confidence/confirmations and records group participation without needing a new post.
+    """
+    data = request.get_json(force=True, silent=True) or {}
+    echo_id = data.get("echo_id")
+    group_name = data.get("group_name", "")
+    query = (data.get("query") or data.get("transcript") or "").strip()
+
+    from database.db import increment_confirmation
+
+    target_id = None
+    if echo_id:
+        target_id = int(echo_id)
+    elif query:
+        # Match nearest echo
+        from services.search import semantic_search
+        matches = semantic_search(query, threshold=0.75, top_k=1, log=False)
+        if matches:
+            target_id = matches[0]["id"]
+
+    if not target_id:
+        return jsonify({"status": "not_found", "message": "No matching Echo found to confirm"}), 404
+
+    stats = increment_confirmation(target_id, group_name=group_name)
+    print(f"[API] Silent confidence confirmation recorded for Echo #{target_id} (+1 from {group_name or 'group'})")
+
+    return jsonify({
+        "status": "confirmed",
+        "echo_id": target_id,
+        "confirmations": stats["confirmations"],
+        "group_count": stats["group_count"],
+        "group_names": stats["group_names"],
+        "message": "Silent confirmation recorded!",
+    }), 200
+
+
+# ── 1-Click Web Re-verification: POST /api/echoes/<id>/reverify ──────────────
+
+@admin_bp.route("/api/echoes/<int:echo_id>/reverify", methods=["POST"])
+def api_reverify_echo(echo_id):
+    """Allows students/seniors on the site to mark an older Echo as 'Still True' with 1 click."""
+    from database.db import increment_confirmation, get_echo_by_id
+    from services.memory_health import compute_health
+
+    echo = get_echo_by_id(echo_id)
+    if not echo:
+        return jsonify({"error": "Echo not found"}), 404
+
+    stats = increment_confirmation(echo_id, group_name="Web Verified")
+    updated_echo = get_echo_by_id(echo_id)
+    health = compute_health(updated_echo)
+
+    return jsonify({
+        "status": "reverified",
+        "echo_id": echo_id,
+        "health": health,
+        "message": "Marked as Still True! Freshness restored.",
+    }), 200
+
+
+# ── Recent echoes feed (for live UI polling) ────────────────────────────────
+
+@admin_bp.route("/api/echoes/recent", methods=["GET"])
+def api_recent_echoes():
+    """Returns the 10 most recently added echoes (for live feed on the website)."""
+    echoes = get_all_echoes()
+    recent = []
+    from services.memory_health import compute_health
+    for e in echoes[:10]:
+        h = compute_health(e)
+        recent.append({
+            "id": e["id"],
+            "course_tag": e.get("course_tag", ""),
+            "topic_tag": e.get("topic_tag", ""),
+            "transcript": (e.get("transcript") or "")[:120],
+            "source": e.get("source", "web"),
+            "question_context": e.get("question_context", ""),
+            "group_count": h.get("group_count", 1),
+            "cross_group_label": h.get("cross_group_label"),
+            "is_whatsapp_stale": h.get("is_whatsapp_stale", False),
+            "stale_warning": h.get("stale_warning"),
+            "created_at": e.get("created_at", ""),
+        })
+    return jsonify(recent), 200
+
+
 # ── QR Code generation (JIT Handover) ──────────────────────────────────────
 
 @admin_bp.route("/qr/<int:echo_id>", methods=["GET"])

@@ -20,9 +20,14 @@ CREATE TABLE IF NOT EXISTS echoes (
     professor_tag   TEXT,
     topic_tag       TEXT,
     transcript      TEXT    NOT NULL,
-    audio_path      TEXT    NOT NULL,
+    audio_path      TEXT    NOT NULL DEFAULT '',
     embedding       BLOB    NOT NULL,   -- JSON-serialised numpy float32 array
     confirmations   INTEGER DEFAULT 1,  -- bumped when near-duplicate submitted
+    source          TEXT    DEFAULT 'web',  -- 'web', 'whatsapp', 'reddit'
+    question_context TEXT,              -- original question (for WhatsApp pairs)
+    group_names     TEXT    DEFAULT '[]', -- JSON array of distinct group names
+    group_count     INTEGER DEFAULT 1,    -- count of distinct groups that discussed this
+    last_confirmed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -56,6 +61,24 @@ def init_db():
     """Create tables if they don't exist. Safe to call multiple times."""
     with get_db() as conn:
         conn.executescript(SCHEMA)
+        # Migrate existing databases: add columns if absent
+        existing_cols = {row[1] for row in conn.execute("PRAGMA table_info(echoes)").fetchall()}
+        if "source" not in existing_cols:
+            conn.execute("ALTER TABLE echoes ADD COLUMN source TEXT DEFAULT 'web'")
+            print("[DB] Migration: added 'source' column")
+        if "question_context" not in existing_cols:
+            conn.execute("ALTER TABLE echoes ADD COLUMN question_context TEXT")
+            print("[DB] Migration: added 'question_context' column")
+        if "group_names" not in existing_cols:
+            conn.execute("ALTER TABLE echoes ADD COLUMN group_names TEXT DEFAULT '[]'")
+            print("[DB] Migration: added 'group_names' column")
+        if "group_count" not in existing_cols:
+            conn.execute("ALTER TABLE echoes ADD COLUMN group_count INTEGER DEFAULT 1")
+            print("[DB] Migration: added 'group_count' column")
+        if "last_confirmed_at" not in existing_cols:
+            conn.execute("ALTER TABLE echoes ADD COLUMN last_confirmed_at TEXT DEFAULT ''")
+            conn.execute("UPDATE echoes SET last_confirmed_at = created_at WHERE last_confirmed_at = '' OR last_confirmed_at IS NULL")
+            print("[DB] Migration: added 'last_confirmed_at' column")
     print(f"[DB] Initialised -> {Config.DATABASE_PATH}")
 
 
@@ -74,26 +97,66 @@ def blob_to_embed(blob: bytes) -> np.ndarray:
 # ── Echo helpers ────────────────────────────────────────────────────────────
 
 def insert_echo(course_tag: str, professor_tag: str, topic_tag: str,
-                transcript: str, audio_path: str, embedding: list[float]) -> int:
+                transcript: str, audio_path: str, embedding: list[float],
+                source: str = "web", question_context: str = "",
+                group_name: str = "") -> int:
     """Insert a new Echo and return its ID."""
     blob = embed_to_blob(embedding)
+    groups = [group_name] if group_name else []
+    groups_json = json.dumps(groups)
+    group_cnt = len(groups) if groups else 1
+
     with get_db() as conn:
         cur = conn.execute(
             """INSERT INTO echoes
-               (course_tag, professor_tag, topic_tag, transcript, audio_path, embedding)
-               VALUES (?, ?, ?, ?, ?, ?)""",
-            (course_tag, professor_tag, topic_tag, transcript, audio_path, blob)
+               (course_tag, professor_tag, topic_tag, transcript, audio_path, embedding,
+                source, question_context, group_names, group_count, last_confirmed_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)""",
+            (course_tag, professor_tag, topic_tag, transcript, audio_path, blob,
+             source, question_context, groups_json, group_cnt)
         )
         return cur.lastrowid
 
 
-def increment_confirmation(echo_id: int):
-    """Bump the confirmation counter on an existing Echo."""
+def increment_confirmation(echo_id: int, group_name: str = "") -> dict:
+    """
+    Bump confirmation count on an existing Echo and record cross-group presence.
+    Returns updated stats dict.
+    """
     with get_db() as conn:
+        row = conn.execute("SELECT group_names, group_count, confirmations FROM echoes WHERE id = ?", (echo_id,)).fetchone()
+        if not row:
+            return {"confirmations": 1, "group_count": 1, "group_names": []}
+
+        curr_groups_raw = row["group_names"] or "[]"
+        try:
+            groups = json.loads(curr_groups_raw)
+            if not isinstance(groups, list):
+                groups = []
+        except Exception:
+            groups = []
+
+        if group_name and group_name not in groups:
+            groups.append(group_name)
+
+        new_group_count = max(1, len(groups))
+        new_groups_json = json.dumps(groups)
+
         conn.execute(
-            "UPDATE echoes SET confirmations = confirmations + 1 WHERE id = ?",
-            (echo_id,)
+            """UPDATE echoes
+               SET confirmations = confirmations + 1,
+                   group_names = ?,
+                   group_count = ?,
+                   last_confirmed_at = CURRENT_TIMESTAMP
+               WHERE id = ?""",
+            (new_groups_json, new_group_count, echo_id)
         )
+
+        return {
+            "confirmations": row["confirmations"] + 1,
+            "group_count": new_group_count,
+            "group_names": groups,
+        }
 
 
 def get_all_echoes() -> list[dict]:
