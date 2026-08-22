@@ -26,6 +26,14 @@ static/audio/*.ogg
 static/audio/*.m4a
 static/audio/*.flac
 
+# Node.js (WhatsApp bot)
+whatsapp-bot/node_modules/
+node_modules/
+*.log
+
+# WhatsApp auth session (sensitive, persisted on Railway volume)
+whatsapp-bot/auth_session/
+
 # IDEs
 .vscode/
 .idea/

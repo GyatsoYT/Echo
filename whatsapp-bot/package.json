@@ -4,6 +4,9 @@
   "description": "WhatsApp capture bot for Echo — institutional memory engine",
   "main": "bot.js",
   "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "start": "node bot.js",
     "dev": "node --watch bot.js"

@@ -3,6 +3,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Base directory (used as fallback for local dev)
+_BASE_DIR = os.path.dirname(__file__)
+
 
 class Config:
     # Flask
@@ -13,11 +16,19 @@ class Config:
     GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
-    # Database
-    DATABASE_PATH = os.path.join(os.path.dirname(__file__), "echo.db")
+    # Database — use DATABASE_PATH env var on Railway (points to persistent volume)
+    # Default: local echo.db for development
+    DATABASE_PATH = os.getenv(
+        "DATABASE_PATH",
+        os.path.join(_BASE_DIR, "echo.db")
+    )
 
-    # Audio uploads
-    UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), "static", "audio")
+    # Audio uploads — use UPLOAD_FOLDER env var on Railway (points to persistent volume)
+    # Default: local static/audio for development
+    UPLOAD_FOLDER = os.getenv(
+        "UPLOAD_FOLDER",
+        os.path.join(_BASE_DIR, "static", "audio")
+    )
     MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50 MB max audio
 
     # Search thresholds (calibrated for Gemini 3072-dim embeddings)

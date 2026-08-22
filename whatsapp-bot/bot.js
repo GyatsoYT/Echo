@@ -73,7 +73,9 @@ const CONFIG = {
   AUTO_REPLY_COOLDOWN_MS: 60_000,
 
   // Auth session folder
-  AUTH_FOLDER: path.join(__dirname, "auth_session"),
+  // On Railway: set AUTH_FOLDER=/data/auth_session (persistent volume)
+  // Locally: ./auth_session
+  AUTH_FOLDER: process.env.AUTH_FOLDER || path.join(__dirname, "auth_session"),
 
   // Whether to post pointer replies in group when Q matches an existing Echo
   ENABLE_POINTER_REPLIES: true,
@@ -93,6 +95,7 @@ try {
     if (process.env.GEMINI_API_KEY) CONFIG.GEMINI_API_KEY = process.env.GEMINI_API_KEY;
     if (process.env.FLASK_URL)      CONFIG.FLASK_URL      = process.env.FLASK_URL;
     if (process.env.PUBLIC_URL)     CONFIG.PUBLIC_URL     = process.env.PUBLIC_URL;
+    if (process.env.AUTH_FOLDER)    CONFIG.AUTH_FOLDER    = process.env.AUTH_FOLDER;
   }
 } catch {}
 

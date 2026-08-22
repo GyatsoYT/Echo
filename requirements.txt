@@ -7,3 +7,4 @@ scikit-learn>=1.5.0
 qrcode[pil]>=7.4.2
 Pillow>=10.0.0
 sqlalchemy>=2.0.0
+gunicorn>=21.2.0
