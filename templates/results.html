@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Results for "{{ query }}"{% endblock %}
+{% block description %}Search results for: {{ query }}{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 760px;">
+
+  <!-- Search bar (repeat at top) -->
+  <form action="/results" method="GET" style="margin-bottom: 1.75rem;" id="search-form">
+    <div class="search-box" style="max-width: 100%;">
+      <input
+        type="text"
+        name="q"
+        class="search-input"
+        value="{{ query }}"
+        placeholder="Ask another question…"
+        autocomplete="off"
+      />
+      <button type="submit" class="search-btn">Search</button>
+    </div>
+  </form>
+
+  <!-- Result count header -->
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.5rem;">
+    <div>
+      <span class="text-muted text-sm">Results for &ldquo;</span><strong style="color: var(--text-primary);">{{ query }}</strong><span class="text-muted text-sm">&rdquo;</span>
+    </div>
+    <span class="text-sm text-muted">{{ result_count }} echo{{ 'es' if result_count != 1 else '' }} found</span>
+  </div>
+
+  {% if has_gaps %}
+  <!-- No results → knowledge gap -->
+  <div class="card" style="text-align: center; padding: 3rem 2rem; border-style: dashed; margin-bottom: 2rem;">
+    <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;">🕳</div>
+    <h3 style="margin-bottom: 0.5rem; color: var(--text-secondary);">No Echoes match this question yet</h3>
+    <p class="text-secondary text-sm" style="margin-bottom: 1.5rem; max-width: 400px; margin-left: auto; margin-right: auto;">
+      This question has been logged as a <strong>Knowledge Gap</strong>.
+      If you know the answer, leave an Echo.
+    </p>
+    <div style="display: flex; gap: 0.875rem; justify-content: center; flex-wrap: wrap;">
+      <a href="/record" class="btn btn-primary">🎙 Leave an Echo</a>
+      <a href="/gaps" class="btn btn-ghost">View all Gaps</a>
+    </div>
+  </div>
+
+  {% else %}
+
+  <!-- Ask the Batch synthesis panel -->
+  {% if synthesis %}
+  <div class="synthesis-panel" style="margin-bottom: 1.75rem;">
+    <div class="synthesis-label">
+      ◈ Ask the Batch
+      <span style="margin-left: auto; font-weight: 400; font-size: 0.7rem; text-transform: none; letter-spacing: 0; color: var(--text-muted);">
+        synthesised from {{ synthesis.echo_count }} echo{{ 'es' if synthesis.echo_count != 1 else '' }}
+        {% if synthesis.source == 'llm' %} · AI{% else %} · template{% endif %}
+      </span>
+    </div>
+    <p class="synthesis-text">{{ synthesis.answer }}</p>
+  </div>
+  {% endif %}
+
+  <!-- Individual Echo results -->
+  <div class="echoes-grid">
+    {% for echo in results %}
+    <div class="echo-card">
+      <div class="echo-card-header">
+        <div class="echo-tags">
+          <span class="tag tag-course">{{ echo.course_tag }}</span>
+          {% if echo.professor_tag %}
+          <span class="tag tag-professor">{{ echo.professor_tag }}</span>
+          {% endif %}
+          {% if echo.topic_tag %}
+          <span class="tag tag-topic">{{ echo.topic_tag }}</span>
+          {% endif %}
+        </div>
+        <!-- Memory health badge -->
+        {% if echo.health %}
+        <span class="health-badge health-{{ echo.health.status }}" title="{{ echo.health.days_old }} days old">
+          {{ echo.health.label }}
+        </span>
+        {% endif %}
+      </div>
+
+      <!-- Transcript -->
+      <p class="echo-transcript" id="transcript-{{ echo.id }}">{{ echo.transcript }}</p>
+      <button type="button" class="expand-btn" style="background:none; border:none; cursor:pointer; color: var(--purple-400); font-size: 0.8125rem; font-weight: 600; padding: 0; margin-bottom: 0.75rem;">Read more</button>
+
+      <!-- Similarity bar -->
+      <div>
+        <div style="display:flex; justify-content: space-between; margin-bottom: 0.3rem;">
+          <span class="text-xs text-muted">Relevance</span>
+          <span class="text-xs" style="color: var(--purple-400);">{{ (echo.similarity * 100) | round | int }}%</span>
+        </div>
+        <div class="similarity-bar">
+          <div class="similarity-fill" data-width="{{ (echo.similarity * 100) | round | int }}" style="width:0%"></div>
+        </div>
+      </div>
+
+      <div class="echo-footer" style="margin-top: 0.875rem;">
+        <span class="text-xs text-muted">{{ echo.created_at[:10] if echo.created_at else '' }}</span>
+        {% if echo.audio_path %}
+        <audio controls style="height: 28px; filter: invert(1) hue-rotate(240deg);" src="{{ url_for('static', filename=echo.audio_path) }}"></audio>
+        {% endif %}
+        <a href="/echoes/{{ echo.id }}" class="btn btn-ghost btn-sm">View</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Search again -->
+  <div style="margin-top: 2.5rem; text-align: center; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+    <p class="text-muted text-sm" style="margin-bottom: 0.875rem;">Know something not covered here?</p>
+    <a href="/record" class="btn btn-primary">🎙 Leave an Echo</a>
+  </div>
+
+</div>
+{% endblock %}

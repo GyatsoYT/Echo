@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Browse Echoes{% endblock %}
+{% block description %}Browse all Echoes left by seniors in the Echo institutional memory engine.{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <div class="page-header" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h1>All Echoes</h1>
+      <p class="sub">{{ echoes | length }} echo{{ 'es' if echoes | length != 1 else '' }} in the memory bank</p>
+    </div>
+    <div style="display: flex; gap: 0.5rem;">
+      <a href="/search" class="btn btn-ghost">🔍 Search</a>
+      <a href="/record" class="btn btn-primary">🎙 Add Echo</a>
+    </div>
+  </div>
+
+  {% if echoes %}
+  <div class="echoes-grid">
+    {% for echo in echoes %}
+    <div class="echo-card">
+      <div class="echo-card-header">
+        <div class="echo-tags">
+          <span class="tag tag-course">{{ echo.course_tag }}</span>
+          {% if echo.professor_tag %}
+          <span class="tag tag-professor">{{ echo.professor_tag }}</span>
+          {% endif %}
+          {% if echo.topic_tag %}
+          <span class="tag tag-topic">{{ echo.topic_tag }}</span>
+          {% endif %}
+        </div>
+        {% if echo.health %}
+        <span class="health-badge health-{{ echo.health.status }}">{{ echo.health.label }}</span>
+        {% endif %}
+      </div>
+
+      <p class="echo-transcript">{{ echo.transcript }}</p>
+      <button type="button" class="expand-btn" style="background:none; border:none; cursor:pointer; color: var(--purple-400); font-size: 0.8125rem; font-weight: 600; padding: 0; margin-bottom: 0.75rem;">Read more</button>
+
+      <div class="echo-footer">
+        <span class="text-xs text-muted">{{ echo.created_at[:10] if echo.created_at else '' }}</span>
+        {% if echo.audio_path %}
+        <audio controls style="height: 28px; filter: invert(1) hue-rotate(240deg);" src="{{ url_for('static', filename=echo.audio_path) }}"></audio>
+        {% endif %}
+        <div style="display: flex; gap: 0.5rem; margin-left: auto;">
+          <a href="/echoes/{{ echo.id }}" class="btn btn-ghost btn-sm">View</a>
+          <a href="/qr/{{ echo.id }}" class="btn btn-ghost btn-sm" target="_blank" title="JIT Handover QR">📱 QR</a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">◈</div>
+    <h3>No Echoes yet</h3>
+    <p style="margin-bottom: 1.5rem;">Be the first senior to leave one for future students.</p>
+    <div style="display: flex; gap: 0.875rem; justify-content: center; flex-wrap: wrap;">
+      <a href="/record" class="btn btn-primary">🎙 Leave an Echo</a>
+      <button class="btn btn-secondary" id="seed-btn">🌱 Seed Demo Data</button>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Ask the Batch{% endblock %}
+{% block description %}Search across all Echoes semantically. Ask anything in plain language.{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 720px;">
+
+  <div class="page-header">
+    <h1>Ask the Batch</h1>
+    <p class="sub">Ask anything. Echo searches what seniors left behind — semantically, not by keyword.</p>
+  </div>
+
+  <!-- Search box -->
+  <form action="/results" method="GET" id="search-form" style="margin-bottom: 3rem;">
+    <div class="search-box" style="max-width: 100%;">
+      <input
+        type="text"
+        name="q"
+        id="main-search"
+        class="search-input"
+        placeholder="e.g. does Prof. Sharma check attendance strictly?"
+        autocomplete="off"
+        autofocus
+      />
+      <button type="submit" class="search-btn">Ask →</button>
+    </div>
+  </form>
+
+  <!-- Example questions -->
+  <div style="margin-bottom: 2rem;">
+    <p class="text-muted text-sm" style="margin-bottom: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Try asking</p>
+    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+      {% for q in [
+        "How does Prof. Mehta grade assignments?",
+        "Is the EC202 lab reliable?",
+        "When does the student portal crash?",
+        "How to prepare for Math101 exams?",
+        "What hostel block has the best wifi?",
+        "How to access IEEE journals for free?"
+      ] %}
+      <button
+        type="button"
+        class="btn btn-ghost btn-sm"
+        onclick="document.getElementById('main-search').value = '{{ q }}'; document.getElementById('search-form').submit();"
+      >{{ q }}</button>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- How search works info -->
+  <div class="card-glass" style="padding: 1.25rem; border-radius: var(--radius-lg);">
+    <div style="display: flex; align-items: flex-start; gap: 0.875rem;">
+      <span style="font-size: 1.5rem; flex-shrink: 0;">◈</span>
+      <div>
+        <h4 style="margin-bottom: 0.25rem; font-size: 0.9375rem;">Semantic, not keyword search</h4>
+        <p class="text-secondary text-sm">
+          Echo understands meaning, not just words. Asking <em>"strict about deadlines?"</em>
+          will find Echoes about professors who dock marks for late submissions —
+          even if none of them use those exact words.
+        </p>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

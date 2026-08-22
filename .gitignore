@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Environment
+.env
+*.env.local
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Audio uploads (don't commit large files)
+static/audio/*.webm
+static/audio/*.mp3
+static/audio/*.wav
+static/audio/*.mp4
+static/audio/*.ogg
+static/audio/*.m4a
+static/audio/*.flac
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

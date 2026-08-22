@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="{% block description %}Echo — Institutional Memory Engine. People graduate. Knowledge shouldn't.{% endblock %}" />
+  <title>{% block title %}Echo{% endblock %} — Institutional Memory Engine</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◈</text></svg>" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="container navbar-inner">
+      <a href="/" class="navbar-brand">
+        <span class="echo-icon">◈</span>
+        <span class="brand-echo">Echo</span>
+      </a>
+      <div class="navbar-links">
+        <a href="/search" class="nav-link {% if request.path == '/search' or request.path == '/results' %}active{% endif %}">Ask</a>
+        <a href="/echoes" class="nav-link {% if request.path.startswith('/echoes') %}active{% endif %}">Browse</a>
+        <a href="/gaps" class="nav-link {% if request.path == '/gaps' %}active{% endif %}">Gaps</a>
+        <a href="/record" class="nav-link nav-cta {% if request.path == '/record' %}active{% endif %}">Leave an Echo</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Flash messages -->
+  {% with messages = get_flashed_messages(with_categories=True) %}
+    {% if messages %}
+      <div class="container" style="padding-top:1rem;">
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category if category != 'message' else 'info' }}">
+            <span>{{ message }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- Alert container for JS-injected alerts -->
+  <div class="container" id="alert-container" style="padding-top:0.5rem;"></div>
+
+  <!-- Page content -->
+  <main class="page-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer style="border-top: 1px solid var(--border); padding: 1.5rem 0; text-align: center; color: var(--text-muted); font-size: 0.8125rem;">
+    <div class="container">
+      <span>◈ <strong style="color: var(--purple-400)">Echo</strong> — People graduate. Knowledge shouldn't.</span>
+      &nbsp;·&nbsp;
+      <a href="/gaps" style="color: var(--text-muted);">Knowledge Gaps</a>
+      &nbsp;·&nbsp;
+      <a href="/echoes" style="color: var(--text-muted);">Browse Echoes</a>
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

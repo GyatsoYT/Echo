@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block title %}Leave an Echo{% endblock %}
+{% block description %}Record or type your hard-earned institutional knowledge as an Echo for future students.{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 720px;">
+
+  <div class="page-header">
+    <h1>Leave an Echo</h1>
+    <p class="sub">Your knowledge will outlive your graduation. Future juniors will thank you.</p>
+  </div>
+
+  <!-- Transcript preview (shown after successful save) -->
+  <div id="transcript-preview-container" class="hidden" style="margin-bottom: 1.5rem;">
+    <div class="synthesis-panel">
+      <div class="synthesis-label">✓ Transcribed</div>
+      <p class="synthesis-text" id="transcript-preview"></p>
+    </div>
+  </div>
+
+  <form id="echo-form" enctype="multipart/form-data">
+
+    <!-- Recording area -->
+    <div class="card" style="margin-bottom: 1.5rem;">
+      <h3 style="margin-bottom: 1rem;">🎙 Record your voice</h3>
+
+      <div class="recorder-area" id="recorder-area">
+        <button type="button" class="record-btn" id="record-btn" title="Start recording">🎙</button>
+        <div>
+          <p class="recording-status" id="recording-status">Click to start recording</p>
+          <p class="text-muted text-sm" id="recording-timer">00:00</p>
+        </div>
+        <audio class="audio-preview hidden" id="audio-preview" controls></audio>
+      </div>
+
+      <!-- Hidden file input that gets populated by recorder.js -->
+      <input type="file" id="audio-file-input" name="audio" accept="audio/*" class="hidden" />
+
+      <!-- Or: upload a file -->
+      <div style="margin-top: 1rem; text-align: center; color: var(--text-muted); font-size: 0.8125rem;">
+        — or —
+      </div>
+      <div style="margin-top: 0.75rem;">
+        <label for="audio-upload" class="form-label">Upload an audio file</label>
+        <input type="file" id="audio-upload" name="audio" accept="audio/*" class="form-input" style="padding: 0.5rem;" />
+      </div>
+    </div>
+
+    <!-- Tags -->
+    <div class="card" style="margin-bottom: 1.5rem;">
+      <h3 style="margin-bottom: 1rem;">🏷 Tag your Echo</h3>
+
+      <div class="form-group">
+        <label class="form-label" for="course_tag">Course Code <span style="color: var(--red)">*</span></label>
+        <input
+          type="text"
+          id="course_tag"
+          name="course_tag"
+          class="form-input"
+          placeholder="e.g. CS301, MATH101, portal, hostel"
+          required
+        />
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="professor_tag">Professor (optional)</label>
+          <input
+            type="text"
+            id="professor_tag"
+            name="professor_tag"
+            class="form-input"
+            placeholder="e.g. Prof. Mehta"
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="topic_tag">Topic (optional)</label>
+          <input
+            type="text"
+            id="topic_tag"
+            name="topic_tag"
+            class="form-input"
+            placeholder="e.g. exams, lab, grading"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Manual transcript (initially hidden, shown as fallback) -->
+    <div class="card hidden" id="manual-transcript-area" style="margin-bottom: 1.5rem;">
+      <h3 style="margin-bottom: 0.5rem;">✍ Type your transcript</h3>
+      <p class="text-secondary text-sm" style="margin-bottom: 1rem;">
+        Transcription is unavailable right now. Type what you wanted to say instead.
+      </p>
+      <div class="form-group" style="margin-bottom: 0;">
+        <textarea
+          id="manual_transcript"
+          name="manual_transcript"
+          class="form-textarea"
+          rows="5"
+          placeholder="What do you wish you knew as a junior student about this course, professor, or topic?"
+        ></textarea>
+      </div>
+    </div>
+
+    <!-- Or show manual transcript option -->
+    <div style="margin-bottom: 1.5rem; text-align: center;">
+      <button type="button" class="btn btn-ghost btn-sm" onclick="
+        const area = document.getElementById('manual-transcript-area');
+        area.classList.toggle('hidden');
+        this.textContent = area.classList.contains('hidden') ? '✍ Type instead of recording' : '✍ Hide text input';
+      ">✍ Type instead of recording</button>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-full btn-lg" id="submit-btn">
+      📡 Save Echo
+    </button>
+  </form>
+
+  <!-- Tips -->
+  <div style="margin-top: 2rem; padding: 1.25rem; background: var(--bg-glass); border-radius: var(--radius-lg); border: 1px solid var(--border);">
+    <h4 style="margin-bottom: 0.75rem; color: var(--text-secondary); font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em;">💡 Tips for a great Echo</h4>
+    <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.375rem;">
+      <li class="text-sm text-secondary">• Be specific — "grading" is okay, "he deducts 5% per missing comment" is better</li>
+      <li class="text-sm text-secondary">• Mention the course code so juniors find it in the right context</li>
+      <li class="text-sm text-secondary">• If your Echo covers the same ground as an existing one, it'll be merged and confirmed</li>
+      <li class="text-sm text-secondary">• Keep it under 2 minutes — focused Echoes work better for search</li>
+    </ul>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/recorder.js') }}"></script>
+<script>
+  EchoRecorder.init({
+    recordBtnId:     'record-btn',
+    statusId:        'recording-status',
+    previewId:       'audio-preview',
+    timerId:         'recording-timer',
+    uploadInputId:   'audio-file-input',
+  });
+
+  // When user uploads a file manually, clear the recorded blob slot
+  document.getElementById('audio-upload').addEventListener('change', function () {
+    document.getElementById('audio-file-input').value = '';
+  });
+</script>
+{% endblock %}

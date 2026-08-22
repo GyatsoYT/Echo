@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Echo #{{ echo.id }} — {{ echo.course_tag }}{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 720px;">
+
+  <div style="margin-bottom: 1.25rem;">
+    <a href="/echoes" class="btn btn-ghost btn-sm">← Back to all Echoes</a>
+  </div>
+
+  <div class="card" style="padding: 2rem;">
+    <!-- Header -->
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+      <div class="echo-tags">
+        <span class="tag tag-course" style="font-size: 0.875rem; padding: 0.3rem 0.875rem;">{{ echo.course_tag }}</span>
+        {% if echo.professor_tag %}
+        <span class="tag tag-professor" style="font-size: 0.875rem; padding: 0.3rem 0.875rem;">{{ echo.professor_tag }}</span>
+        {% endif %}
+        {% if echo.topic_tag %}
+        <span class="tag tag-topic" style="font-size: 0.875rem; padding: 0.3rem 0.875rem;">{{ echo.topic_tag }}</span>
+        {% endif %}
+      </div>
+      {% if echo.health %}
+      <span class="health-badge health-{{ echo.health.status }}" style="font-size: 0.875rem;">{{ echo.health.label }}</span>
+      {% endif %}
+    </div>
+
+    <!-- Transcript -->
+    <div style="margin-bottom: 1.5rem;">
+      <p class="text-muted text-xs" style="margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Transcript</p>
+      <p style="font-size: 1rem; line-height: 1.8; color: var(--text-primary);">{{ echo.transcript }}</p>
+    </div>
+
+    <!-- Audio playback -->
+    {% if echo.audio_path %}
+    <div style="margin-bottom: 1.5rem;">
+      <p class="text-muted text-xs" style="margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Audio</p>
+      <audio controls style="width: 100%; filter: invert(1) hue-rotate(240deg);" src="{{ url_for('static', filename=echo.audio_path) }}"></audio>
+    </div>
+    {% endif %}
+
+    <!-- Metadata -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; padding-top: 1.25rem; border-top: 1px solid var(--border);">
+      <div>
+        <p class="text-xs text-muted" style="margin-bottom: 0.25rem;">Created</p>
+        <p class="text-sm">{{ echo.created_at[:16] if echo.created_at else '—' }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted" style="margin-bottom: 0.25rem;">Confirmations</p>
+        <p class="text-sm">{{ echo.confirmations }} senior{{ 's' if echo.confirmations != 1 else '' }}</p>
+      </div>
+      {% if echo.health %}
+      <div>
+        <p class="text-xs text-muted" style="margin-bottom: 0.25rem;">Freshness</p>
+        <p class="text-sm">{{ echo.health.freshness_pct }}% ({{ echo.health.days_old }} days old)</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Actions -->
+    <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap;">
+      <a href="/qr/{{ echo.id }}" class="btn btn-ghost" target="_blank">📱 JIT Handover QR</a>
+      <a href="/search?q={{ echo.topic_tag or echo.course_tag }}" class="btn btn-ghost">🔍 Related Echoes</a>
+      <form action="/echoes/{{ echo.id }}/delete" method="POST" style="margin-left: auto;"
+            onsubmit="return confirm('Delete this Echo permanently?');">
+        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
