@@ -5,33 +5,50 @@
 {% block content %}
 <div class="container">
 
-  <!-- Hero -->
+  <!-- ═══ Hero ═══════════════════════════════════════════════════════════ -->
   <section class="hero">
     <div class="hero-eyebrow">
-      ◈ &nbsp; Institutional Memory Engine
+      👻 &nbsp; Institutional Memory Engine
     </div>
+
     <h1 class="hero-title">
-      People graduate.<br>
-      <span class="highlight">Knowledge shouldn't.</span>
+      The people who left<br>
+      <span class="highlight">didn't take everything</span><br>
+      <span class="hero-title-line2">with them.</span>
     </h1>
+
+    <div class="hero-stagger" aria-hidden="true">
+      <span class="hero-stagger-item">Their shortcuts</span>
+      <span class="hero-stagger-item">Their mistakes</span>
+      <span class="hero-stagger-item">Their survival knowledge</span>
+    </div>
+
     <p class="hero-sub">
-      Echo preserves what seniors learned the hard way — grading quirks, lab traps,
-      portal crashes — so juniors stop repeating the same mistakes.
+      Ask what seniors wish they'd known. Echo finds it in their recordings —
+      semantically, not by keyword.
     </p>
+
     <div class="hero-cta">
-      <a href="/search" class="btn btn-primary btn-lg">
-        🔍 Ask a Question
+      <a href="/search" class="btn btn-primary btn-lg" id="hero-cta-ask">
+        Ask the Ghosts →
       </a>
-      <a href="/record" class="btn btn-secondary btn-lg">
+      <a href="/record" class="btn btn-secondary btn-lg" id="hero-cta-record">
         🎙 Leave an Echo
       </a>
     </div>
-    <p class="hero-tagline">
-      Not another Q&amp;A app. A <strong>semantic memory layer</strong> for your institution.
-    </p>
+
+    <p class="hero-chips-label">What are you trying to survive?</p>
+    <div class="hero-chips">
+      <a href="/results?q=exam+tips+and+preparation" class="hero-chip" id="chip-exams">📚 Exams</a>
+      <a href="/results?q=lab+experience+and+tips" class="hero-chip" id="chip-labs">🧪 Labs</a>
+      <a href="/results?q=professor+grading+and+attendance" class="hero-chip" id="chip-profs">👨‍🏫 Professors</a>
+      <a href="/results?q=hostel+and+campus+life" class="hero-chip" id="chip-campus">🏫 Campus</a>
+      <a href="/results?q=assignments+and+deadlines" class="hero-chip" id="chip-assignments">💀 Assignments</a>
+      <a href="/results?q=internship+and+placement" class="hero-chip" id="chip-internship">🚀 Placement</a>
+    </div>
   </section>
 
-  <!-- Live stats bar -->
+  <!-- ═══ Stats bar ═══════════════════════════════════════════════════════ -->
   <div class="stats-bar">
     <div class="stat-item">
       <div class="stat-value" data-count="{{ stats.total_echoes }}">{{ stats.total_echoes }}</div>
@@ -47,85 +64,90 @@
     </div>
   </div>
 
-  <!-- How it works -->
-  <section style="padding: 2rem 0 3rem;">
-    <h2 style="text-align:center; margin-bottom: 0.75rem;">How Echo works</h2>
-    <p style="text-align:center; color: var(--text-secondary); max-width: 560px; margin: 0 auto 2.5rem;">
-      Three steps. No logins required for the demo. No wasted knowledge.
+  <!-- ═══ How it works ════════════════════════════════════════════════════ -->
+  <section style="padding: 1rem 0 3rem;">
+    <h2 style="text-align:center; margin-bottom: 0.5rem;">How Echo works</h2>
+    <p style="text-align:center; color: var(--text-secondary); max-width: 520px; margin: 0 auto 2.5rem; font-size: 0.9375rem;">
+      Three steps. Your institution's memory — captured, preserved, searchable.
     </p>
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem;">
 
-      <div class="card" style="text-align:center; padding: 2rem 1.5rem;">
-        <div style="font-size: 2.5rem; margin-bottom: 1rem;">🎙</div>
-        <h3 style="margin-bottom: 0.5rem;">1. Leave an Echo</h3>
-        <p class="text-secondary text-sm">
+      <div class="step-card" id="step-1">
+        <div class="step-num">01</div>
+        <span class="step-icon">🎙</span>
+        <h3 style="margin-bottom: 0.5rem;">Leave an Echo</h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.65;">
           Record a voice note or type what you wish you knew as a junior.
           Tag it by course, professor, or topic.
         </p>
       </div>
 
-      <div class="card" style="text-align:center; padding: 2rem 1.5rem;">
-        <div style="font-size: 2.5rem; margin-bottom: 1rem;">◈</div>
-        <h3 style="margin-bottom: 0.5rem;">2. Echo processes it</h3>
-        <p class="text-secondary text-sm">
+      <div class="step-card" id="step-2">
+        <div class="step-num">02</div>
+        <span class="step-icon">◈</span>
+        <h3 style="margin-bottom: 0.5rem;">Echo processes it</h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.65;">
           Whisper transcribes the audio. Gemini embeds the meaning semantically.
           Memory Health is computed. Stored forever.
         </p>
       </div>
 
-      <div class="card" style="text-align:center; padding: 2rem 1.5rem;">
-        <div style="font-size: 2.5rem; margin-bottom: 1rem;">🔍</div>
-        <h3 style="margin-bottom: 0.5rem;">3. Ask the Batch</h3>
-        <p class="text-secondary text-sm">
+      <div class="step-card" id="step-3">
+        <div class="step-num">03</div>
+        <span class="step-icon">👻</span>
+        <h3 style="margin-bottom: 0.5rem;">Ask the Ghosts</h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.65;">
           Ask anything in plain language. Echo finds the relevant memories and
-          synthesises what seniors collectively said.
+          synthesises what seniors collectively knew.
         </p>
       </div>
 
     </div>
   </section>
 
-  <!-- Quick search -->
+  <!-- ═══ Quick search ════════════════════════════════════════════════════ -->
   <section style="padding: 1rem 0 3rem; text-align: center;">
-    <h2 style="margin-bottom: 0.75rem;">Try asking something</h2>
-    <p class="text-secondary" style="margin-bottom: 1.75rem;">Type a question a junior student might have.</p>
+    <h2 style="margin-bottom: 0.5rem;">Try asking something</h2>
+    <p style="color: var(--text-secondary); margin-bottom: 1.75rem; font-size: 0.9375rem;">Type a question a junior student might have.</p>
     <form action="/results" method="GET" class="search-box" id="search-form">
+      <span class="search-ghost-icon">👻</span>
       <input
         type="text"
         name="q"
         class="search-input"
         placeholder="e.g. how does Prof. Mehta grade assignments?"
         autocomplete="off"
+        id="home-search-input"
       />
-      <button type="submit" class="search-btn">Search</button>
+      <button type="submit" class="search-btn" id="home-search-btn">Ask →</button>
     </form>
   </section>
 
-  <!-- Knowledge Gaps callout -->
+  <!-- ═══ Knowledge Gaps callout ══════════════════════════════════════════ -->
   {% if stats.gap_count > 0 %}
   <section style="margin-bottom: 3rem;">
-    <div class="card-glass" style="padding: 1.5rem; display: flex; align-items: center; gap: 1.25rem; border-radius: var(--radius-xl);">
-      <div style="font-size: 2rem; flex-shrink: 0;">🕳</div>
-      <div>
-        <h3 style="margin-bottom: 0.25rem;">{{ stats.gap_count }} unanswered questions</h3>
-        <p class="text-secondary text-sm">
-          Students have asked questions that no Echo has answered yet.
-          If you know the answer, leave an Echo.
+    <div class="gaps-callout">
+      <div class="gaps-callout-icon">🔴</div>
+      <div style="flex: 1;">
+        <h3>{{ stats.gap_count }} question{{ 's' if stats.gap_count != 1 else '' }} your institution can't answer yet</h3>
+        <p>
+          Students have asked these. Nobody has left an Echo.
+          If you know the answer, <strong>be the first ghost.</strong>
         </p>
       </div>
-      <a href="/gaps" class="btn btn-ghost" style="flex-shrink:0; margin-left: auto;">View Gaps →</a>
+      <a href="/gaps" class="btn btn-secondary" id="gaps-callout-btn" style="flex-shrink:0;">View Gaps →</a>
     </div>
   </section>
   {% endif %}
 
-  <!-- Seed data callout (dev helper) -->
+  <!-- ═══ Seed data (dev helper — subtle) ═════════════════════════════════ -->
   {% if stats.total_echoes == 0 %}
-  <div class="card" style="text-align: center; padding: 2rem; margin-bottom: 3rem; border-style: dashed;">
-    <p class="text-secondary" style="margin-bottom: 1rem;">
+  <div class="card" style="text-align: center; padding: 2rem; margin-bottom: 3rem; border-style: dashed; opacity: 0.65;">
+    <p style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.875rem;">
       No Echoes yet. Seed the database with 15 demo Echoes to try the search features.
     </p>
-    <button class="btn btn-secondary" id="seed-btn">🌱 Seed Demo Data</button>
+    <button class="btn btn-secondary btn-sm" id="seed-btn">🌱 Seed Demo Data</button>
   </div>
   {% endif %}
 

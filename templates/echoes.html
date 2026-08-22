@@ -1,26 +1,58 @@
 {% extends "base.html" %}
-{% block title %}Browse Echoes{% endblock %}
+{% block title %}Browse Memories{% endblock %}
 {% block description %}Browse all Echoes left by seniors in the Echo institutional memory engine.{% endblock %}
 
 {% block content %}
 <div class="container">
 
-  <div class="page-header" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+  <!-- Page header -->
+  <div class="page-header" style="display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
     <div>
-      <h1>All Echoes</h1>
-      <p class="sub">{{ echoes | length }} echo{{ 'es' if echoes | length != 1 else '' }} in the memory bank</p>
+      <span class="page-eyebrow">Memory Bank</span>
+      <h1>The Memory of Your Campus</h1>
+      <p class="sub">{{ echoes | length }} Echo{{ 'es' if echoes | length != 1 else '' }} preserved in the memory bank</p>
     </div>
-    <div style="display: flex; gap: 0.5rem;">
-      <a href="/search" class="btn btn-ghost">🔍 Search</a>
-      <a href="/record" class="btn btn-primary">🎙 Add Echo</a>
+    <div style="display: flex; gap: 0.5rem; align-items: flex-start; padding-top: 0.5rem;">
+      <a href="/search" class="btn btn-ghost" id="echoes-search-btn">👻 Ask Ghosts</a>
+      <a href="/record" class="btn btn-primary" id="echoes-record-btn">🎙 Add Echo</a>
     </div>
   </div>
 
   {% if echoes %}
-  <div class="echoes-grid">
+
+  <!-- Filter + sort bar -->
+  <div class="echoes-filter-bar" id="filter-bar">
+    <span class="echoes-filter-bar-label">Filter:</span>
+    <button type="button" class="filter-pill active" data-filter="all" id="filter-all">All</button>
+    <button type="button" class="filter-pill" data-filter="course" id="filter-courses">📚 Courses</button>
+    <button type="button" class="filter-pill" data-filter="professor" id="filter-professors">👨‍🏫 Professors</button>
+    <button type="button" class="filter-pill" data-filter="lab" id="filter-labs">🧪 Labs</button>
+    <button type="button" class="filter-pill" data-filter="campus" id="filter-campus">🏫 Campus</button>
+
+    <div class="sort-controls">
+      <span style="font-family: 'Space Mono', monospace; font-size: 0.6rem; color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase;">Sort:</span>
+      <button type="button" class="sort-btn active" data-sort="recent" id="sort-recent">Recent</button>
+      <button type="button" class="sort-btn" data-sort="fresh" id="sort-fresh">Freshest</button>
+    </div>
+  </div>
+
+  <!-- Echoes grid -->
+  <div class="echoes-grid" id="echoes-grid">
     {% for echo in echoes %}
-    <div class="echo-card">
-      <div class="echo-card-header">
+    {% set echo_num = '%03d' % echo.id %}
+    <div
+      class="ghost-card"
+      id="echo-card-{{ echo.id }}"
+      data-echo-id="{{ echo.id }}"
+      data-course="{{ echo.course_tag | lower }}"
+      data-topic="{{ (echo.topic_tag or '') | lower }}"
+      data-created="{{ echo.created_at or '' }}"
+      data-health="{{ echo.health.status if echo.health else 'fresh' }}"
+    >
+
+      <div class="echo-number">ECHO #{{ echo_num }}</div>
+
+      <div class="ghost-card-header">
         <div class="echo-tags">
           <span class="tag tag-course">{{ echo.course_tag }}</span>
           {% if echo.professor_tag %}
@@ -35,17 +67,43 @@
         {% endif %}
       </div>
 
-      <p class="echo-transcript">{{ echo.transcript }}</p>
-      <button type="button" class="expand-btn" style="background:none; border:none; cursor:pointer; color: var(--purple-400); font-size: 0.8125rem; font-weight: 600; padding: 0; margin-bottom: 0.75rem;">Read more</button>
+      <p class="ghost-quote">"{{ echo.transcript | truncate(100, True, '…') }}"</p>
+      <p class="ghost-card-body" id="echoes-body-{{ echo.id }}">{{ echo.transcript }}</p>
+      <button
+        type="button"
+        class="expand-btn"
+        data-target="echoes-body-{{ echo.id }}"
+        style="background:none; border:none; cursor:pointer; color: var(--purple-400); font-size: 0.8rem; font-weight: 700; padding: 0; margin-bottom: 0.75rem; font-family: 'Space Mono', monospace; letter-spacing: 0.04em; text-transform: uppercase;"
+        id="echoes-expand-{{ echo.id }}"
+      >Read more ↓</button>
 
-      <div class="echo-footer">
-        <span class="text-xs text-muted">{{ echo.created_at[:10] if echo.created_at else '' }}</span>
-        {% if echo.audio_path %}
-        <audio controls style="height: 28px; filter: invert(1) hue-rotate(240deg);" src="{{ url_for('static', filename=echo.audio_path) }}"></audio>
-        {% endif %}
+      {% if echo.audio_path %}
+      <div class="audio-section" id="echoes-audio-{{ echo.id }}">
+        <button
+          type="button"
+          class="play-btn"
+          id="echoes-play-{{ echo.id }}"
+          data-audio="{{ url_for('static', filename=echo.audio_path) }}"
+          data-echo-id="{{ echo.id }}"
+          title="Play Echo"
+        >▶</button>
+        <div class="waveform" id="echoes-waveform-{{ echo.id }}">
+          {% for i in range(12) %}
+          <div class="waveform-bar" style="height: 3px;"></div>
+          {% endfor %}
+        </div>
+        <span class="audio-time" id="echoes-time-{{ echo.id }}">0:00</span>
+        <audio id="echoes-audio-el-{{ echo.id }}" src="{{ url_for('static', filename=echo.audio_path) }}" preload="none"></audio>
+      </div>
+      {% endif %}
+
+      <div class="ghost-card-footer" style="margin-top: 0.875rem;">
+        <span style="font-size: 0.75rem; color: var(--text-muted); font-family: 'Space Mono', monospace;">
+          {{ echo.created_at[:10] if echo.created_at else '—' }}
+        </span>
         <div style="display: flex; gap: 0.5rem; margin-left: auto;">
-          <a href="/echoes/{{ echo.id }}" class="btn btn-ghost btn-sm">View</a>
-          <a href="/qr/{{ echo.id }}" class="btn btn-ghost btn-sm" target="_blank" title="JIT Handover QR">📱 QR</a>
+          <a href="/echoes/{{ echo.id }}" class="btn btn-ghost btn-sm" id="echoes-view-{{ echo.id }}">View →</a>
+          <a href="/qr/{{ echo.id }}" class="btn btn-ghost btn-sm" target="_blank" title="Share this Echo via QR" id="echoes-qr-{{ echo.id }}">📱 QR</a>
         </div>
       </div>
     </div>
@@ -53,15 +111,20 @@
   </div>
 
   {% else %}
+
   <div class="empty-state">
     <div class="empty-icon">◈</div>
-    <h3>No Echoes yet</h3>
-    <p style="margin-bottom: 1.5rem;">Be the first senior to leave one for future students.</p>
+    <h3 style="font-family: 'Space Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase;">Nothing here yet.</h3>
+    <p style="margin-bottom: 0.5rem;">Be the first ghost.</p>
+    <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.75rem;">
+      Your knowledge can outlive your graduation.
+    </p>
     <div style="display: flex; gap: 0.875rem; justify-content: center; flex-wrap: wrap;">
-      <a href="/record" class="btn btn-primary">🎙 Leave an Echo</a>
+      <a href="/record" class="btn btn-primary" id="echoes-empty-record">🎙 Leave an Echo</a>
       <button class="btn btn-secondary" id="seed-btn">🌱 Seed Demo Data</button>
     </div>
   </div>
+
   {% endif %}
 
 </div>

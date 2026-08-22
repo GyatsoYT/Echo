@@ -5,23 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="{% block description %}Echo — Institutional Memory Engine. People graduate. Knowledge shouldn't.{% endblock %}" />
   <title>{% block title %}Echo{% endblock %} — Institutional Memory Engine</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◈</text></svg>" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👻</text></svg>" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
 </head>
-<body>
+<body id="page-top">
 
   <!-- Navigation -->
   <nav class="navbar">
     <div class="container navbar-inner">
       <a href="/" class="navbar-brand">
-        <span class="echo-icon">◈</span>
+        <span class="echo-icon">👻</span>
         <span class="brand-echo">Echo</span>
       </a>
       <div class="navbar-links">
-        <a href="/search" class="nav-link {% if request.path == '/search' or request.path == '/results' %}active{% endif %}">Ask</a>
-        <a href="/echoes" class="nav-link {% if request.path.startswith('/echoes') %}active{% endif %}">Browse</a>
-        <a href="/gaps" class="nav-link {% if request.path == '/gaps' %}active{% endif %}">Gaps</a>
-        <a href="/record" class="nav-link nav-cta {% if request.path == '/record' %}active{% endif %}">Leave an Echo</a>
+        <a href="/search" class="nav-link {% if request.path == '/search' or request.path == '/results' %}active{% endif %}" id="nav-ask">Ask Ghosts</a>
+        <a href="/echoes" class="nav-link {% if request.path.startswith('/echoes') %}active{% endif %}" id="nav-memories">Memories</a>
+        <a href="/gaps" class="nav-link {% if request.path == '/gaps' %}active{% endif %}" id="nav-gaps">Gaps</a>
+        <a href="/record" class="nav-link nav-cta {% if request.path == '/record' %}active{% endif %}" id="nav-record">Leave an Echo</a>
       </div>
     </div>
   </nav>
@@ -48,13 +48,22 @@
   </main>
 
   <!-- Footer -->
-  <footer style="border-top: 1px solid var(--border); padding: 1.5rem 0; text-align: center; color: var(--text-muted); font-size: 0.8125rem;">
+  <footer class="site-footer">
     <div class="container">
-      <span>◈ <strong style="color: var(--purple-400)">Echo</strong> — People graduate. Knowledge shouldn't.</span>
-      &nbsp;·&nbsp;
-      <a href="/gaps" style="color: var(--text-muted);">Knowledge Gaps</a>
-      &nbsp;·&nbsp;
-      <a href="/echoes" style="color: var(--text-muted);">Browse Echoes</a>
+      <div class="footer-inner">
+        <div class="footer-brand">
+          👻 <strong>Echo</strong> — People graduate. Knowledge shouldn't.
+        </div>
+        <div class="footer-links">
+          <a href="/search" id="footer-ask">Ask the Ghosts</a>
+          <a href="/echoes" id="footer-memories">Browse Memories</a>
+          <a href="/gaps" id="footer-gaps">Knowledge Gaps</a>
+          <a href="/record" id="footer-record">Leave an Echo</a>
+        </div>
+      </div>
+      <p class="footer-tagline">
+        "What the institution remembers. What it forgets."
+      </p>
     </div>
   </footer>
 

@@ -3,11 +3,12 @@
 {% block description %}Search results for: {{ query }}{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width: 760px;">
+<div class="container" style="max-width: 780px;">
 
-  <!-- Search bar (repeat at top) -->
+  <!-- Repeat search bar -->
   <form action="/results" method="GET" style="margin-bottom: 1.75rem;" id="search-form">
     <div class="search-box" style="max-width: 100%;">
+      <span class="search-ghost-icon">👻</span>
       <input
         type="text"
         name="q"
@@ -15,55 +16,98 @@
         value="{{ query }}"
         placeholder="Ask another question…"
         autocomplete="off"
+        id="results-search-input"
       />
-      <button type="submit" class="search-btn">Search</button>
+      <button type="submit" class="search-btn" id="results-search-btn">Ask →</button>
     </div>
   </form>
 
-  <!-- Result count header -->
-  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.5rem;">
-    <div>
-      <span class="text-muted text-sm">Results for &ldquo;</span><strong style="color: var(--text-primary);">{{ query }}</strong><span class="text-muted text-sm">&rdquo;</span>
+  <!-- Results header -->
+  <div class="results-header">
+    <div class="results-ghost-label">
+      👻 <span>·</span> The Ghosts Have Something To Say
     </div>
-    <span class="text-sm text-muted">{{ result_count }} echo{{ 'es' if result_count != 1 else '' }} found</span>
+    <h1 class="results-headline">
+      {% if has_gaps %}
+        The Ghosts Are Silent.
+      {% else %}
+        {{ result_count }} Echo{{ 'es' if result_count != 1 else '' }} found
+      {% endif %}
+    </h1>
+    <p class="results-sub">
+      {% if not has_gaps %}
+        Searching the collective memory &nbsp;·&nbsp; query: "{{ query }}"
+      {% else %}
+        No Echo exists for this question yet
+      {% endif %}
+    </p>
   </div>
 
   {% if has_gaps %}
-  <!-- No results → knowledge gap -->
-  <div class="card" style="text-align: center; padding: 3rem 2rem; border-style: dashed; margin-bottom: 2rem;">
-    <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;">🕳</div>
-    <h3 style="margin-bottom: 0.5rem; color: var(--text-secondary);">No Echoes match this question yet</h3>
-    <p class="text-secondary text-sm" style="margin-bottom: 1.5rem; max-width: 400px; margin-left: auto; margin-right: auto;">
-      This question has been logged as a <strong>Knowledge Gap</strong>.
-      If you know the answer, leave an Echo.
+  <!-- ═══ No results — THE GHOSTS ARE SILENT ═══════════════════════════ -->
+  <div class="silence-state">
+    <span class="silence-icon">🕳</span>
+    <h2 class="silence-title">The Ghosts Are Silent.</h2>
+    <p class="silence-sub">
+      No Echo matches this question yet. This has been logged as a
+      <strong style="color: var(--red);">Knowledge Gap</strong> — the institution's blind spot.
+      <br><br>
+      If you know the answer, leave an Echo. Future students will find it.
     </p>
     <div style="display: flex; gap: 0.875rem; justify-content: center; flex-wrap: wrap;">
-      <a href="/record" class="btn btn-primary">🎙 Leave an Echo</a>
-      <a href="/gaps" class="btn btn-ghost">View all Gaps</a>
+      <a href="/record?topic={{ query | urlencode }}" class="btn btn-primary btn-lg" id="silence-record-btn">🎙 Leave an Echo</a>
+      <a href="/gaps" class="btn btn-ghost" id="silence-gaps-btn">View all Gaps →</a>
     </div>
   </div>
 
   {% else %}
 
-  <!-- Ask the Batch synthesis panel -->
+  <!-- ═══ Consensus panel ═══════════════════════════════════════════════ -->
   {% if synthesis %}
-  <div class="synthesis-panel" style="margin-bottom: 1.75rem;">
-    <div class="synthesis-label">
-      ◈ Ask the Batch
-      <span style="margin-left: auto; font-weight: 400; font-size: 0.7rem; text-transform: none; letter-spacing: 0; color: var(--text-muted);">
-        synthesised from {{ synthesis.echo_count }} echo{{ 'es' if synthesis.echo_count != 1 else '' }}
-        {% if synthesis.source == 'llm' %} · AI{% else %} · template{% endif %}
-      </span>
+  <div class="consensus-panel" id="consensus-panel">
+    <div class="consensus-eyebrow">Ghost Consensus</div>
+    <h2 class="consensus-title">
+      The Ghosts Mostly Agree.
+    </h2>
+
+    <div class="consensus-bar-wrapper">
+      <div class="consensus-bar-track">
+        <div
+          class="consensus-bar-fill"
+          id="consensus-bar-fill"
+          data-pct="{{ [((synthesis.echo_count / result_count) * 100) | round | int, 95] | min }}"
+          style="width: 0%;"
+        ></div>
+      </div>
+      <div class="consensus-bar-labels">
+        <span class="agree" id="consensus-agree-pct">—% agree</span>
+        <span class="disagree" id="consensus-disagree-pct">—% add nuance</span>
+      </div>
     </div>
-    <p class="synthesis-text">{{ synthesis.answer }}</p>
+
+    <p class="consensus-text">{{ synthesis.answer }}</p>
+
+    <div class="consensus-meta">
+      <span class="consensus-meta-item">Echoes synthesised: <span>{{ synthesis.echo_count }}</span></span>
+      <span class="consensus-meta-item">Method: <span>{{ 'AI · Gemini' if synthesis.source == 'llm' else 'Template' }}</span></span>
+      <span class="consensus-meta-item">Query: <span>"{{ query }}"</span></span>
+    </div>
   </div>
   {% endif %}
 
-  <!-- Individual Echo results -->
-  <div class="echoes-grid">
+  <!-- ═══ Ghost Cards ═══════════════════════════════════════════════════ -->
+  <div class="echoes-grid" id="results-grid">
     {% for echo in results %}
-    <div class="echo-card">
-      <div class="echo-card-header">
+    {% set pct = (echo.similarity * 100) | round | int %}
+    {% set echo_num = '%03d' % echo.id %}
+
+    <div class="ghost-card" id="ghost-card-{{ echo.id }}" data-echo-id="{{ echo.id }}">
+
+      <!-- Echo number -->
+      <div class="echo-number">ECHO #{{ echo_num }}</div>
+
+      <!-- Header row: tags + health -->
+      <div class="ghost-card-header">
         <div class="echo-tags">
           <span class="tag tag-course">{{ echo.course_tag }}</span>
           {% if echo.professor_tag %}
@@ -73,7 +117,6 @@
           <span class="tag tag-topic">{{ echo.topic_tag }}</span>
           {% endif %}
         </div>
-        <!-- Memory health badge -->
         {% if echo.health %}
         <span class="health-badge health-{{ echo.health.status }}" title="{{ echo.health.days_old }} days old">
           {{ echo.health.label }}
@@ -81,37 +124,130 @@
         {% endif %}
       </div>
 
-      <!-- Transcript -->
-      <p class="echo-transcript" id="transcript-{{ echo.id }}">{{ echo.transcript }}</p>
-      <button type="button" class="expand-btn" style="background:none; border:none; cursor:pointer; color: var(--purple-400); font-size: 0.8125rem; font-weight: 600; padding: 0; margin-bottom: 0.75rem;">Read more</button>
+      <!-- Quote (first sentence) + full transcript -->
+      <p class="ghost-quote">"{{ echo.transcript | truncate(120, True, '…') }}"</p>
+      <p class="ghost-card-body" id="body-{{ echo.id }}">{{ echo.transcript }}</p>
+      <button
+        type="button"
+        class="expand-btn"
+        data-target="body-{{ echo.id }}"
+        style="background:none; border:none; cursor:pointer; color: var(--purple-400); font-size: 0.8rem; font-weight: 700; padding: 0; margin-bottom: 0.75rem; font-family: 'Space Mono', monospace; letter-spacing: 0.04em; text-transform: uppercase;"
+        id="expand-{{ echo.id }}"
+      >Read more ↓</button>
 
-      <!-- Similarity bar -->
-      <div>
-        <div style="display:flex; justify-content: space-between; margin-bottom: 0.3rem;">
-          <span class="text-xs text-muted">Relevance</span>
-          <span class="text-xs" style="color: var(--purple-400);">{{ (echo.similarity * 100) | round | int }}%</span>
+      <!-- Audio section -->
+      {% if echo.audio_path %}
+      <div class="audio-section" id="audio-section-{{ echo.id }}">
+        <button
+          type="button"
+          class="play-btn"
+          id="play-btn-{{ echo.id }}"
+          data-audio="{{ url_for('static', filename=echo.audio_path) }}"
+          data-echo-id="{{ echo.id }}"
+          title="Play this Echo"
+        >▶</button>
+        <div class="waveform" id="waveform-{{ echo.id }}">
+          {% for i in range(12) %}
+          <div class="waveform-bar" style="height: 3px;"></div>
+          {% endfor %}
+        </div>
+        <span class="audio-time" id="audio-time-{{ echo.id }}">0:00</span>
+        <audio id="audio-{{ echo.id }}" src="{{ url_for('static', filename=echo.audio_path) }}" preload="none"></audio>
+      </div>
+      {% else %}
+      <div style="margin: 0.875rem 0;">
+        <span class="no-audio-badge">📝 Transcript only</span>
+      </div>
+      {% endif %}
+
+      <!-- Match score -->
+      <div class="match-section">
+        <div class="match-label">
+          <span class="match-label-text">Match</span>
+          <span class="match-pct">{{ pct }}%</span>
         </div>
         <div class="similarity-bar">
-          <div class="similarity-fill" data-width="{{ (echo.similarity * 100) | round | int }}" style="width:0%"></div>
+          <div class="similarity-fill" data-width="{{ pct }}" style="width:0%"></div>
         </div>
       </div>
 
-      <div class="echo-footer" style="margin-top: 0.875rem;">
-        <span class="text-xs text-muted">{{ echo.created_at[:10] if echo.created_at else '' }}</span>
-        {% if echo.audio_path %}
-        <audio controls style="height: 28px; filter: invert(1) hue-rotate(240deg);" src="{{ url_for('static', filename=echo.audio_path) }}"></audio>
-        {% endif %}
-        <a href="/echoes/{{ echo.id }}" class="btn btn-ghost btn-sm">View</a>
+      <!-- Footer: senior label + view link -->
+      <div class="ghost-card-footer">
+        <a href="/echoes/{{ echo.id }}" class="btn btn-ghost btn-sm" id="view-echo-{{ echo.id }}">View →</a>
+        <span class="ghost-senior-label">
+          FROM A SENIOR — {{ echo.created_at[:4] if echo.created_at else '—' }}
+        </span>
       </div>
+
+      <!-- Why this answer? -->
+      <div class="why-panel">
+        <button
+          type="button"
+          class="why-trigger"
+          id="why-trigger-{{ echo.id }}"
+          data-echo-id="{{ echo.id }}"
+          data-course="{{ echo.course_tag }}"
+          data-professor="{{ echo.professor_tag or '' }}"
+          data-topic="{{ echo.topic_tag or '' }}"
+          data-pct="{{ pct }}"
+        >
+          <span class="why-arrow">▶</span>
+          Why this answer?
+        </button>
+        <div class="why-content" id="why-content-{{ echo.id }}">
+          <div class="why-row">
+            <span class="why-key">Semantic match</span>
+            <span class="why-val"><strong>{{ pct }}%</strong> similarity to your query</span>
+          </div>
+          <div class="why-row">
+            <span class="why-key">Echo covers</span>
+            <span class="why-val">
+              {{ echo.course_tag }}{% if echo.professor_tag %} · {{ echo.professor_tag }}{% endif %}{% if echo.topic_tag %} · {{ echo.topic_tag }}{% endif %}
+            </span>
+          </div>
+          {% if echo.health %}
+          <div class="why-row">
+            <span class="why-key">Memory freshness</span>
+            <span class="why-val">{{ echo.health.label }} — {{ echo.health.days_old }} days old</span>
+          </div>
+          {% endif %}
+          <div style="margin-top: 0.75rem;">
+            <p class="why-key" style="margin-bottom: 0.375rem;">Matched keywords from your query</p>
+            <div class="why-keywords" id="why-keywords-{{ echo.id }}" data-query="{{ query }}"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trust votes -->
+      <div class="trust-row">
+        <span class="trust-label">Was this useful?</span>
+        <button
+          type="button"
+          class="trust-btn"
+          id="trust-yes-{{ echo.id }}"
+          data-echo-id="{{ echo.id }}"
+          data-vote="yes"
+        >❤ Useful</button>
+        <button
+          type="button"
+          class="trust-btn"
+          id="trust-no-{{ echo.id }}"
+          data-echo-id="{{ echo.id }}"
+          data-vote="no"
+        >👎 Not anymore</button>
+      </div>
+
     </div>
     {% endfor %}
   </div>
   {% endif %}
 
-  <!-- Search again -->
-  <div style="margin-top: 2.5rem; text-align: center; padding-top: 1.5rem; border-top: 1px solid var(--border);">
-    <p class="text-muted text-sm" style="margin-bottom: 0.875rem;">Know something not covered here?</p>
-    <a href="/record" class="btn btn-primary">🎙 Leave an Echo</a>
+  <!-- Bottom CTA -->
+  <div style="margin-top: 3rem; text-align: center; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+    <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 0.875rem; font-family: 'Space Mono', monospace; letter-spacing: 0.04em;">
+      Know something not covered here?
+    </p>
+    <a href="/record" class="btn btn-primary" id="results-record-btn">🎙 Leave an Echo</a>
   </div>
 
 </div>
