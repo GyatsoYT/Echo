@@ -32,12 +32,21 @@ function initRecordForm() {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const submitBtn = form.querySelector('[type="submit"]');
-    const alertContainer = document.getElementById('alert-container');
-
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border-width:2px;display:inline-block"></span> Saving Echo…';
 
     const formData = new FormData(form);
+
+    // If there is an in-memory recorded blob from the mic, append it directly
+    const recordedBlob = (typeof EchoRecorder !== 'undefined' && EchoRecorder.getBlob) ? EchoRecorder.getBlob() : null;
+    const uploadedFile = document.getElementById('audio-upload')?.files?.[0];
+
+    if (recordedBlob && (!uploadedFile || !uploadedFile.name)) {
+      formData.set('audio', recordedBlob, 'echo-recording.webm');
+    } else if (uploadedFile) {
+      formData.set('audio', uploadedFile);
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border-width:2px;display:inline-block"></span> Saving & Transcribing…';
 
     try {
       const res = await fetch('/record', { method: 'POST', body: formData });

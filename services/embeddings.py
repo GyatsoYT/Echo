@@ -52,7 +52,7 @@ def embed_text(text: str) -> list[float]:
         list[float] — embedding vector.
     """
     if not Config.GEMINI_API_KEY:
-        print("[Embeddings] GEMINI_API_KEY not set → using fallback embedding")
+        print("[Embeddings] GEMINI_API_KEY not set -> using fallback embedding")
         return _fallback_embed(text)
 
     try:
@@ -68,7 +68,7 @@ def embed_text(text: str) -> list[float]:
         return result.embeddings[0].values
 
     except Exception as exc:
-        print(f"[Embeddings] Gemini API failed ({exc}) → using fallback embedding")
+        print(f"[Embeddings] Gemini API failed ({exc}) -> using fallback embedding")
         return _fallback_embed(text)
 
 
@@ -93,5 +93,5 @@ def embed_query(text: str) -> list[float]:
         return result.embeddings[0].values
 
     except Exception as exc:
-        print(f"[Embeddings] Gemini query embed failed ({exc}) → using fallback")
+        print(f"[Embeddings] Gemini query embed failed ({exc}) -> using fallback")
         return _fallback_embed(text)

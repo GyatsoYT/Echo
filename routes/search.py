@@ -29,7 +29,7 @@ def search_page():
 @search_bp.route("/search", methods=["POST"])
 def run_search():
     data = request.get_json(silent=True) or {}
-    query = data.get("query", "").strip()
+    query = (data.get("query") or data.get("q") or "").strip()
 
     if not query:
         return jsonify({"error": "Query cannot be empty"}), 400

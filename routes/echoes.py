@@ -76,20 +76,23 @@ def submit_recording():
     if not course_tag:
         return jsonify({"error": "Course tag is required"}), 400
 
-    audio_file = request.files.get("audio")
+    audio_file = request.files.get("audio") or request.files.get("recorded_audio") or request.files.get("uploaded_audio")
     transcript = ""
     audio_path_rel = ""
 
     # Handle audio file
     if audio_file and audio_file.filename:
         abs_path, audio_path_rel = _save_audio(audio_file)
+        file_size = os.path.getsize(abs_path)
+        print(f"[Echoes] Received audio: {audio_path_rel} ({file_size} bytes)")
 
         # Try Whisper transcription
         if not manual_transcript:
             try:
                 transcript = transcribe_audio(abs_path)
+                print(f"[Echoes] Transcribed text: {transcript}")
             except TranscriptionError as e:
-                # Return the audio path so frontend can show manual entry form
+                print(f"[Echoes] Transcription error: {e}")
                 return jsonify({
                     "status": "needs_transcript",
                     "message": str(e),
