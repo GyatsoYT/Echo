@@ -1,120 +1,122 @@
 {% extends "base.html" %}
-{% block title %}Results for "{{ query }}"{% endblock %}
+{% block title %}Results for "{{ query }}" — ECHO{% endblock %}
 {% block description %}Search results for: {{ query }}{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width: 780px;">
+<div class="container" style="max-width: 920px; padding: 2rem 1rem 4rem;">
 
-  <!-- Repeat search bar -->
-  <form action="/results" method="GET" style="margin-bottom: 1.75rem;" id="search-form">
-    <div class="search-box" style="max-width: 100%;">
-      <span class="search-ghost-icon">👻</span>
+  <!-- Large, Roomy Search input bar -->
+  <form action="/results" method="GET" class="hero-search-form" style="margin-bottom: 2.25rem;" id="search-form">
+    <div class="hero-search-wrap">
+      <div class="search-icon-slot">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" class="search-svg-icon">
+          <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2.2"/>
+          <path d="M20 20L16 16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+      </div>
       <input
         type="text"
         name="q"
-        class="search-input"
+        class="hero-search-input"
         value="{{ query }}"
-        placeholder="Ask another question…"
+        placeholder="Ask another question about SST courses, labs, or dual degrees..."
         autocomplete="off"
+        required
         id="results-search-input"
       />
-      <button type="submit" class="search-btn" id="results-search-btn">Ask →</button>
+      <button type="submit" class="btn btn-primary hero-search-btn" id="results-search-btn">
+        <span>Search</span> &rarr;
+      </button>
     </div>
   </form>
 
-  <!-- Results header -->
-  <div class="results-header">
-    <div class="results-ghost-label">
-      👻 <span>·</span> The Ghosts Have Something To Say
+  <!-- Results meta header -->
+  <div class="results-fancy-header">
+    <div class="results-eyebrow-tag">
+      <span>◈</span> <span>SST SENIOR KNOWLEDGE ARCHIVE</span>
     </div>
-    <h1 class="results-headline">
+    <h1 class="results-main-title">
       {% if has_gaps %}
-        The Ghosts Are Silent.
+        No Senior Memories Found Yet.
       {% else %}
-        {{ result_count }} Echo{{ 'es' if result_count != 1 else '' }} found
+        {{ result_count }} Senior Echo{{ 'es' if result_count != 1 else '' }} found
       {% endif %}
     </h1>
-    <p class="results-sub">
+    <p class="results-sub-text">
       {% if not has_gaps %}
-        Searching the collective memory &nbsp;·&nbsp; query: "{{ query }}"
+        Matched across SST campus memory &nbsp;&middot;&nbsp; query: <strong>"{{ query }}"</strong>
       {% else %}
-        No Echo exists for this question yet
+        No senior has recorded advice for this topic yet
       {% endif %}
     </p>
   </div>
 
   {% if has_gaps %}
-  <!-- ═══ No results — THE GHOSTS ARE SILENT ═══════════════════════════ -->
-  <div class="silence-state">
-    <span class="silence-icon">🕳</span>
-    <h2 class="silence-title">The Ghosts Are Silent.</h2>
-    <p class="silence-sub">
-      No Echo matches this question yet. This has been logged as a
-      <strong style="color: var(--red);">Knowledge Gap</strong> — the institution's blind spot.
-      <br><br>
-      If you know the answer, leave an Echo. Future students will find it.
+  <!-- Zero state / Gap box -->
+  <div class="gap-fancy-alert">
+    <div class="gap-alert-top">
+      <span class="gap-pulse-indicator"></span>
+      <h3 class="gap-alert-title">Knowledge Gap Logged</h3>
+    </div>
+    <p class="gap-alert-description">
+      No Echo matches this question yet. This has been logged into the <strong>Knowledge Gaps</strong> radar so graduating seniors can fill it.
     </p>
-    <div style="display: flex; gap: 0.875rem; justify-content: center; flex-wrap: wrap;">
-      <a href="/record?topic={{ query | urlencode }}" class="btn btn-primary btn-lg" id="silence-record-btn">🎙 Leave an Echo</a>
-      <a href="/gaps" class="btn btn-ghost" id="silence-gaps-btn">View all Gaps →</a>
+    <div class="gap-alert-buttons">
+      <a href="/record?topic={{ query | urlencode }}" class="btn btn-primary btn-sm btn-glow" id="silence-record-btn">
+        🎙 Leave an Echo for this
+      </a>
+      <a href="/gaps" class="btn btn-secondary btn-sm" id="silence-gaps-btn">View All Gaps &rarr;</a>
     </div>
   </div>
 
   {% else %}
 
-  <!-- ═══ Consensus panel ═══════════════════════════════════════════════ -->
+  <!-- ═══ Consensus / Direct Answer Panel ═══════════════════════════════ -->
   {% if synthesis %}
-  <div class="consensus-panel" id="consensus-panel">
-    <div class="consensus-eyebrow">Ghost Consensus</div>
-    <h2 class="consensus-title">
-      The Ghosts Mostly Agree.
-    </h2>
+  <section class="consensus-fancy-panel" id="consensus-panel">
+    <div class="consensus-top-row">
+      <div class="consensus-badge">
+        <span class="consensus-spark">✦</span> SENIOR CONSENSUS SYNTHESIS
+      </div>
+      <span class="consensus-engine-tag">Synthesised via Gemini</span>
+    </div>
 
-    <div class="consensus-bar-wrapper">
-      <div class="consensus-bar-track">
+    <!-- Consensus Agreement Progress Bar -->
+    <div class="consensus-meter">
+      <div class="consensus-track">
         <div
-          class="consensus-bar-fill"
+          class="consensus-fill"
           id="consensus-bar-fill"
           data-pct="{{ [((synthesis.echo_count / result_count) * 100) | round | int, 95] | min }}"
-          style="width: 0%;"
+          style="width: {{ [((synthesis.echo_count / result_count) * 100) | round | int, 95] | min }}%;"
         ></div>
       </div>
-      <div class="consensus-bar-labels">
-        <span class="agree" id="consensus-agree-pct">—% agree</span>
-        <span class="disagree" id="consensus-disagree-pct">—% add nuance</span>
+      <div class="consensus-meter-labels">
+        <span class="agree-label" id="consensus-agree-pct">{{ [((synthesis.echo_count / result_count) * 100) | round | int, 95] | min }}% senior agreement</span>
+        <span class="meta-label">{{ synthesis.echo_count }} Echoes analysed</span>
       </div>
     </div>
 
-    <p class="consensus-text">{{ synthesis.answer }}</p>
-
-    <div class="consensus-meta">
-      <span class="consensus-meta-item">Echoes synthesised: <span>{{ synthesis.echo_count }}</span></span>
-      <span class="consensus-meta-item">Method: <span>{{ 'AI · Gemini' if synthesis.source == 'llm' else 'Template' }}</span></span>
-      <span class="consensus-meta-item">Query: <span>"{{ query }}"</span></span>
-    </div>
-  </div>
+    <div class="consensus-answer-text">{{ synthesis.answer }}</div>
+  </section>
   {% endif %}
 
-  <!-- ═══ Ghost Cards ═══════════════════════════════════════════════════ -->
-  <div class="echoes-grid" id="results-grid">
+  <!-- ═══ Search Results List ══════════════════════════════════════════ -->
+  <div class="results-cards-list" id="results-grid">
     {% for echo in results %}
     {% set pct = (echo.similarity * 100) | round | int %}
     {% set echo_num = '%03d' % echo.id %}
 
-    <div class="ghost-card" id="ghost-card-{{ echo.id }}" data-echo-id="{{ echo.id }}">
-
-      <!-- Echo number -->
-      <div class="echo-number">ECHO #{{ echo_num }}</div>
-
-      <!-- Header row: tags + health -->
-      <div class="ghost-card-header">
-        <div class="echo-tags">
-          <span class="tag tag-course">{{ echo.course_tag }}</span>
+    <article class="ghost-result-card ghost-card" id="ghost-card-{{ echo.id }}" data-echo-id="{{ echo.id }}">
+      <div class="card-top-bar">
+        <div class="card-id-tags">
+          <span class="echo-badge-id">ECHO #{{ echo_num }}</span>
+          <span class="badge-tag">{{ echo.course_tag }}</span>
           {% if echo.professor_tag %}
-          <span class="tag tag-professor">{{ echo.professor_tag }}</span>
+            <span class="badge-tag tag-subtle">{{ echo.professor_tag }}</span>
           {% endif %}
           {% if echo.topic_tag %}
-          <span class="tag tag-topic">{{ echo.topic_tag }}</span>
+            <span class="badge-tag tag-subtle">{{ echo.topic_tag }}</span>
           {% endif %}
           {% if echo.source == 'whatsapp' %}
           <span class="tag" style="background: rgba(37,211,102,0.15); color: #25d366; border: 1px solid rgba(37,211,102,0.3); font-size: 0.65rem;">💬 WhatsApp</span>
@@ -125,149 +127,90 @@
           <span class="tag" style="background: rgba(124,58,237,0.18); color: #a78bfa; border: 1px solid rgba(124,58,237,0.4); font-size: 0.65rem;" title="{{ echo.health.group_names | join(', ') }}">{{ echo.health.cross_group_label }}</span>
           {% endif %}
         </div>
-        {% if echo.health %}
-        <span class="health-badge health-{{ echo.health.status }}" id="health-badge-{{ echo.id }}" title="{{ echo.health.days_old }} days old">
-          {{ echo.health.label }}
-        </span>
-        {% endif %}
+
+        <div class="card-health-match">
+          {% if echo.health %}
+            <span class="health-pill health-{{ echo.health.status }}" id="health-badge-{{ echo.id }}" title="{{ echo.health.days_old }} days old">
+              {{ echo.health.label }}
+            </span>
+          {% endif %}
+          <span class="match-score-badge">{{ pct }}% MATCH</span>
+        </div>
       </div>
 
+      <!-- WhatsApp Stale Warning & 1-Click Re-verification -->
       {% if echo.health and echo.health.is_whatsapp_stale %}
-      <div class="stale-whatsapp-box" id="stale-box-{{ echo.id }}" style="margin-bottom: 0.75rem; padding: 0.5rem 0.75rem; background: rgba(245,158,11,0.1); border-left: 3px solid #f59e0b; border-radius: 0 4px 4px 0; font-size: 0.76rem; color: #fbbf24; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap;">
+      <div class="stale-whatsapp-box" id="stale-box-{{ echo.id }}" style="margin: 0.5rem 0; padding: 0.5rem 0.75rem; background: rgba(245,158,11,0.1); border-left: 3px solid #f59e0b; border-radius: 0 4px 4px 0; font-size: 0.76rem; color: #fbbf24; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap;">
         <span>⚠️ {{ echo.health.stale_warning }}</span>
         <button type="button" class="btn btn-secondary btn-sm reverify-btn" data-echo-id="{{ echo.id }}" style="font-size: 0.7rem; padding: 0.2rem 0.5rem; background: rgba(245,158,11,0.2); border-color: #f59e0b; color: #fef3c7; cursor: pointer;">Mark as Still True ✓</button>
       </div>
       {% endif %}
 
+      <!-- Question context -->
       {% if echo.question_context %}
-      <p style="font-size: 0.78rem; color: var(--text-muted); font-style: italic; margin-bottom: 0.5rem; padding: 0.4rem 0.6rem; background: rgba(255,255,255,0.04); border-left: 2px solid rgba(37,211,102,0.4); border-radius: 0 4px 4px 0;">Q: {{ echo.question_context | truncate(80, True, '…') }}</p>
+      <p style="font-size: 0.78rem; color: var(--text-muted); font-style: italic; margin: 0.4rem 0 0.6rem; padding: 0.4rem 0.6rem; background: rgba(255,255,255,0.04); border-left: 2px solid rgba(37,211,102,0.4); border-radius: 0 4px 4px 0;">
+        Q: {{ echo.question_context | truncate(80, True, '…') }}
+      </p>
       {% endif %}
 
-      <!-- Quote (first sentence) + full transcript -->
-      <p class="ghost-quote">"{{ echo.transcript | truncate(120, True, '…') }}"</p>
-      <p class="ghost-card-body" id="body-{{ echo.id }}">{{ echo.transcript }}</p>
-      <button
-        type="button"
-        class="expand-btn"
-        data-target="body-{{ echo.id }}"
-        style="background:none; border:none; cursor:pointer; color: var(--purple-400); font-size: 0.8rem; font-weight: 700; padding: 0; margin-bottom: 0.75rem; font-family: 'Space Mono', monospace; letter-spacing: 0.04em; text-transform: uppercase;"
-        id="expand-{{ echo.id }}"
-      >Read more ↓</button>
-
-      <!-- Audio section -->
-      {% if echo.audio_path %}
-      <div class="audio-section" id="audio-section-{{ echo.id }}">
-        <button
-          type="button"
-          class="play-btn"
-          id="play-btn-{{ echo.id }}"
-          data-audio="{{ url_for('static', filename=echo.audio_path) }}"
-          data-echo-id="{{ echo.id }}"
-          title="Play this Echo"
-        >▶</button>
-        <div class="waveform" id="waveform-{{ echo.id }}">
-          {% for i in range(12) %}
-          <div class="waveform-bar" style="height: 3px;"></div>
-          {% endfor %}
-        </div>
-        <span class="audio-time" id="audio-time-{{ echo.id }}">0:00</span>
-        <audio id="audio-{{ echo.id }}" src="{{ url_for('static', filename=echo.audio_path) }}" preload="none"></audio>
-      </div>
-      {% else %}
-      <div style="margin: 0.875rem 0;">
-        <span class="no-audio-badge">📝 Transcript only</span>
-      </div>
-      {% endif %}
-
-      <!-- Match score -->
-      <div class="match-section">
-        <div class="match-label">
-          <span class="match-label-text">Match</span>
-          <span class="match-pct">{{ pct }}%</span>
-        </div>
-        <div class="similarity-bar">
-          <div class="similarity-fill" data-width="{{ pct }}" style="width:0%"></div>
-        </div>
+      <div class="card-author-meta">
+        <span>From an SST Senior</span>
+        <span class="dot-sep">&middot;</span>
+        <time>{{ echo.created_at[:10] if echo.created_at else 'Recent' }}</time>
       </div>
 
-      <!-- Footer: senior label + view link -->
-      <div class="ghost-card-footer">
-        <a href="/echoes/{{ echo.id }}" class="btn btn-ghost btn-sm" id="view-echo-{{ echo.id }}">View →</a>
-        <span class="ghost-senior-label">
-          FROM A SENIOR — {{ echo.created_at[:4] if echo.created_at else '—' }}
-        </span>
-      </div>
+      <blockquote class="card-transcript-body" id="body-{{ echo.id }}">
+        "{{ echo.transcript }}"
+      </blockquote>
 
-      <!-- Why this answer? -->
-      <div class="why-panel">
-        <button
-          type="button"
-          class="why-trigger"
-          id="why-trigger-{{ echo.id }}"
-          data-echo-id="{{ echo.id }}"
-          data-course="{{ echo.course_tag }}"
-          data-professor="{{ echo.professor_tag or '' }}"
-          data-topic="{{ echo.topic_tag or '' }}"
-          data-pct="{{ pct }}"
-        >
-          <span class="why-arrow">▶</span>
-          Why this answer?
-        </button>
-        <div class="why-content" id="why-content-{{ echo.id }}">
-          <div class="why-row">
-            <span class="why-key">Semantic match</span>
-            <span class="why-val"><strong>{{ pct }}%</strong> similarity to your query</span>
-          </div>
-          <div class="why-row">
-            <span class="why-key">Echo covers</span>
-            <span class="why-val">
-              {{ echo.course_tag }}{% if echo.professor_tag %} · {{ echo.professor_tag }}{% endif %}{% if echo.topic_tag %} · {{ echo.topic_tag }}{% endif %}
-            </span>
-          </div>
-          {% if echo.health %}
-          <div class="why-row">
-            <span class="why-key">Memory freshness</span>
-            <span class="why-val">{{ echo.health.label }} — {{ echo.health.days_old }} days old</span>
-          </div>
+      <!-- Action & Audio bar -->
+      <div class="card-bottom-bar">
+        <div class="action-audio-group">
+          {% if echo.audio_path %}
+            <button
+              type="button"
+              class="btn btn-secondary btn-xs audio-play-trigger play-btn"
+              data-audio="{{ url_for('static', filename=echo.audio_path) }}"
+              data-id="{{ echo.id }}"
+              data-echo-id="{{ echo.id }}"
+              id="play-btn-{{ echo.id }}"
+            >
+              ▶ Listen
+            </button>
+            <audio id="audio-{{ echo.id }}" src="{{ url_for('static', filename=echo.audio_path) }}" preload="none"></audio>
+          {% else %}
+            <span class="text-xs text-muted">📝 Transcript Only</span>
           {% endif %}
-          <div style="margin-top: 0.75rem;">
-            <p class="why-key" style="margin-bottom: 0.375rem;">Matched keywords from your query</p>
-            <div class="why-keywords" id="why-keywords-{{ echo.id }}" data-query="{{ query }}"></div>
-          </div>
+          <a href="/echoes/{{ echo.id }}" class="btn-text-action">View Details &rarr;</a>
+        </div>
+
+        <div class="action-trust-group">
+          <span class="text-xs text-muted">Helpful?</span>
+          <button
+            type="button"
+            class="btn btn-ghost btn-xs trust-btn"
+            id="trust-yes-{{ echo.id }}"
+            data-echo-id="{{ echo.id }}"
+            data-vote="yes"
+          >
+            👍 Useful
+          </button>
+          <button
+            type="button"
+            class="btn btn-ghost btn-xs trust-btn"
+            id="trust-no-{{ echo.id }}"
+            data-echo-id="{{ echo.id }}"
+            data-vote="no"
+          >
+            👎 No
+          </button>
         </div>
       </div>
-
-      <!-- Trust votes -->
-      <div class="trust-row">
-        <span class="trust-label">Was this useful?</span>
-        <button
-          type="button"
-          class="trust-btn"
-          id="trust-yes-{{ echo.id }}"
-          data-echo-id="{{ echo.id }}"
-          data-vote="yes"
-        >❤ Useful</button>
-        <button
-          type="button"
-          class="trust-btn"
-          id="trust-no-{{ echo.id }}"
-          data-echo-id="{{ echo.id }}"
-          data-vote="no"
-        >👎 Not anymore</button>
-      </div>
-
-    </div>
+    </article>
     {% endfor %}
   </div>
-  {% endif %}
 
-  <!-- Bottom CTA -->
-  <div style="margin-top: 3rem; text-align: center; padding-top: 1.5rem; border-top: 1px solid var(--border);">
-    <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 0.875rem; font-family: 'Space Mono', monospace; letter-spacing: 0.04em;">
-      Know something not covered here?
-    </p>
-    <a href="/record" class="btn btn-primary" id="results-record-btn">🎙 Leave an Echo</a>
-  </div>
+  {% endif %}
 
 </div>
 {% endblock %}

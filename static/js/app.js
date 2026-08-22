@@ -1,29 +1,363 @@
 /**
- * app.js — Echo Ghost Mentor UI
- * Handles: alerts, form submissions, ghost cards, filters, animations,
- *          waveform playback, search scanning, trust votes, category picker
+ * ECHO — Campus Knowledge Base UI
+ * Functional application scripts: alerts, forms, audio player, filters, trust votes, animations.
  */
 
-// ── Flash alerts ─────────────────────────────────────────────────────────────
+// ── Alert Notification ───────────────────────────────────────────────────────
 
 function showAlert(message, type = 'info', container = null) {
   const icons = { success: '✓', error: '✕', info: 'ℹ', warning: '⚠' };
   const div = document.createElement('div');
   div.className = `alert alert-${type}`;
-  div.innerHTML = `<span>${icons[type] || 'ℹ'}</span><span>${message}</span>`;
+  div.innerHTML = `<span>${icons[type] || 'ℹ'}</span> <span>${message}</span>`;
 
   const target = container || document.getElementById('alert-container') || document.body;
   target.prepend(div);
 
   setTimeout(() => {
     div.style.opacity = '0';
-    div.style.transform = 'translateY(-8px)';
-    div.style.transition = 'all 0.3s ease';
-    setTimeout(() => div.remove(), 300);
-  }, 6000);
+    div.style.transition = 'opacity 0.2s ease';
+    setTimeout(() => div.remove(), 200);
+  }, 5000);
 }
 
-// ── Record form submission ────────────────────────────────────────────────────
+// ── Scroll-Reveal Animations with Staggering ──────────────────────────────────
+
+function initScrollReveal() {
+  const revealElements = document.querySelectorAll('.reveal-on-scroll, .step-card, .ghost-card');
+  if (!revealElements.length) return;
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, index) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => {
+          entry.target.classList.add('revealed');
+        }, index * 45);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, {
+    threshold: 0.08,
+    rootMargin: '0px 0px -30px 0px'
+  });
+
+  revealElements.forEach(el => observer.observe(el));
+}
+
+// ── Counter Animations ───────────────────────────────────────────────────────
+
+function animateCounters() {
+  const counters = document.querySelectorAll('.stat-num[data-count], .stat-val[data-count], .stat-value[data-count]');
+  if (!counters.length) return;
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const el = entry.target;
+        const target = parseInt(el.dataset.count, 10);
+        if (isNaN(target) || target === 0) return;
+
+        let start = 0;
+        const duration = 1000;
+        const startTime = performance.now();
+
+        const updateCount = (now) => {
+          const progress = Math.min((now - startTime) / duration, 1);
+          const ease = 1 - Math.pow(1 - progress, 3); // cubic ease-out
+          el.textContent = Math.floor(ease * target);
+          if (progress < 1) {
+            requestAnimationFrame(updateCount);
+          } else {
+            el.textContent = target;
+          }
+        };
+
+        requestAnimationFrame(updateCount);
+        observer.unobserve(el);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  counters.forEach(c => observer.observe(c));
+}
+
+// ── Search Scanning Step Sequence (Ask Tab) ──────────────────────────────────
+
+function initSearchScanning() {
+  const searchForm = document.getElementById('search-form');
+  const scanContainer = document.getElementById('search-scanning');
+
+  if (!searchForm || !scanContainer) return;
+
+  searchForm.addEventListener('submit', (e) => {
+    const query = searchForm.querySelector('input[name="q"]')?.value.trim();
+    if (!query) return;
+
+    scanContainer.classList.add('visible');
+    const steps = ['scan-1', 'scan-2', 'scan-3', 'scan-4'];
+
+    steps.forEach((id, i) => {
+      setTimeout(() => {
+        const stepEl = document.getElementById(id);
+        if (stepEl) {
+          steps.slice(0, i).forEach(prevId => {
+            const p = document.getElementById(prevId);
+            if (p) {
+              p.classList.remove('active');
+              p.classList.add('done');
+            }
+          });
+          stepEl.classList.add('active');
+        }
+      }, i * 260);
+    });
+  });
+}
+
+// ── Echoes Archive Page: Live Search, Filter Pills & View Switcher ───────────
+
+function initEchoesArchive() {
+  const grid = document.getElementById('echoes-grid');
+  const liveSearch = document.getElementById('echoes-live-search');
+  const filterPills = document.querySelectorAll('.filter-pill');
+  const sortBtns = document.querySelectorAll('.sort-tab-btn, .sort-btn');
+  const viewGridBtn = document.getElementById('view-grid-btn');
+  const viewListBtn = document.getElementById('view-list-btn');
+  const cards = document.querySelectorAll('.echo-interactive-card, .ghost-card');
+
+  if (!grid || !cards.length) return;
+
+  let currentFilter = 'all';
+  let currentSearch = '';
+
+  const filterMap = {
+    all: () => true,
+    course: (card) => !['lab', 'professor', 'hostel', 'campus', 'placement', 'internship', 'whatsapp'].some(t =>
+      (card.dataset.course || '').includes(t) || (card.dataset.topic || '').includes(t)),
+    professor: (card) => (card.dataset.prof || '').includes('prof') || (card.dataset.topic || '').includes('prof'),
+    lab: (card) => (card.dataset.course || '').includes('lab') || (card.dataset.topic || '').includes('lab'),
+    campus: (card) => ['hostel', 'campus', 'portal', 'registration', 'wifi', 'library'].some(t =>
+      (card.dataset.course || '').includes(t) || (card.dataset.topic || '').includes(t)),
+    whatsapp: (card) => card.dataset.source === 'whatsapp',
+  };
+
+  function applyEchoFilters() {
+    cards.forEach(card => {
+      const course = card.dataset.course || '';
+      const prof = card.dataset.prof || '';
+      const topic = card.dataset.topic || '';
+      const transcript = card.dataset.transcript || '';
+
+      const filterFn = filterMap[currentFilter] || filterMap.all;
+      const matchesCategory = filterFn(card);
+
+      const matchesSearch = !currentSearch ||
+        course.includes(currentSearch) ||
+        prof.includes(currentSearch) ||
+        topic.includes(currentSearch) ||
+        transcript.includes(currentSearch);
+
+      if (matchesCategory && matchesSearch) {
+        card.style.display = 'flex';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+
+  // Live Search Input
+  if (liveSearch) {
+    liveSearch.addEventListener('input', (e) => {
+      currentSearch = e.target.value.toLowerCase().trim();
+      applyEchoFilters();
+    });
+  }
+
+  // Filter Pills
+  filterPills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      filterPills.forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      currentFilter = pill.dataset.filter || 'all';
+      applyEchoFilters();
+    });
+  });
+
+  // Sort Tabs
+  sortBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      sortBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const cardArray = Array.from(cards);
+      if (btn.dataset.sort === 'recent') {
+        cardArray.sort((a, b) => (b.dataset.created || '').localeCompare(a.dataset.created || ''));
+      } else if (btn.dataset.sort === 'fresh') {
+        const order = { fresh: 0, aging: 1, stale: 2 };
+        cardArray.sort((a, b) => (order[a.dataset.health] || 0) - (order[b.dataset.health] || 0));
+      }
+      cardArray.forEach(c => grid.appendChild(c));
+    });
+  });
+
+  // View Mode Switcher
+  if (viewGridBtn && viewListBtn) {
+    viewGridBtn.addEventListener('click', () => {
+      viewGridBtn.classList.add('active');
+      viewListBtn.classList.remove('active');
+      grid.classList.remove('list-view');
+    });
+
+    viewListBtn.addEventListener('click', () => {
+      viewListBtn.classList.add('active');
+      viewGridBtn.classList.remove('active');
+      grid.classList.add('list-view');
+    });
+  }
+
+  // Expand / Collapse Full Transcripts
+  document.querySelectorAll('.expand-text-btn, .expand-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const teaserId = btn.dataset.targetTeaser;
+      const fullId = btn.dataset.targetFull || btn.dataset.target;
+      const teaserEl = teaserId ? document.getElementById(teaserId) : null;
+      const fullEl = document.getElementById(fullId);
+
+      if (!fullEl) return;
+
+      const isExpanded = !fullEl.classList.contains('hidden') && fullEl.classList.contains('expanded');
+      if (isExpanded) {
+        fullEl.classList.add('hidden');
+        fullEl.classList.remove('expanded');
+        if (teaserEl) teaserEl.classList.remove('hidden');
+        const span = btn.querySelector('span');
+        if (span) span.innerHTML = 'Read full memory &darr;';
+        else btn.textContent = 'Read more ↓';
+      } else {
+        fullEl.classList.remove('hidden');
+        fullEl.classList.add('expanded');
+        if (teaserEl) teaserEl.classList.add('hidden');
+        const span = btn.querySelector('span');
+        if (span) span.innerHTML = 'Show less &uarr;';
+        else btn.textContent = 'Show less ↑';
+      }
+    });
+  });
+}
+
+// ── Gaps Interactive Toolbar & Filter ────────────────────────────────────────
+
+function initGapsFilter() {
+  const filterBtns = document.querySelectorAll('.gaps-filter-btn');
+  const searchInput = document.getElementById('gaps-search-input');
+  const gapCards = document.querySelectorAll('.interactive-gap-card');
+
+  if (!gapCards.length) return;
+
+  let currentFilter = 'all';
+  let currentSearch = '';
+
+  function applyFilters() {
+    gapCards.forEach(card => {
+      const severity = card.dataset.severity || 'open';
+      const query = card.dataset.query || '';
+
+      const matchesFilter = (currentFilter === 'all') ||
+        (currentFilter === 'critical' && severity === 'critical') ||
+        (currentFilter === 'high' && (severity === 'high' || severity === 'critical'));
+
+      const matchesSearch = !currentSearch || query.includes(currentSearch);
+
+      if (matchesFilter && matchesSearch) {
+        card.style.display = 'flex';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.dataset.filter || 'all';
+      applyFilters();
+    });
+  });
+
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      currentSearch = e.target.value.toLowerCase().trim();
+      applyFilters();
+    });
+  }
+}
+
+// ── Global Audio Player with Equalizer Animation ─────────────────────────────
+
+let currentPlayingAudio = null;
+let currentPlayingBtn = null;
+let currentWaveformWrap = null;
+
+function initAudioPlayers() {
+  document.querySelectorAll('.audio-play-trigger, .play-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const audioUrl = btn.dataset.audio;
+      const echoId = btn.dataset.id || btn.dataset.echoId;
+      const waveformWrap = document.getElementById(`waveform-wrap-${echoId}`) || document.getElementById(`waveform-${echoId}`);
+
+      if (!audioUrl) return;
+
+      let audioEl = document.getElementById(`audio-${echoId}`) || document.getElementById(`echoes-audio-el-${echoId}`);
+      if (!audioEl) {
+        audioEl = new Audio(audioUrl);
+        audioEl.id = `audio-${echoId}`;
+        document.body.appendChild(audioEl);
+      }
+
+      if (currentPlayingAudio && currentPlayingAudio !== audioEl) {
+        currentPlayingAudio.pause();
+        if (currentPlayingBtn) {
+          currentPlayingBtn.textContent = '▶ Play Note';
+          currentPlayingBtn.classList.remove('playing');
+        }
+        if (currentWaveformWrap) {
+          currentWaveformWrap.classList.remove('playing');
+        }
+      }
+
+      if (audioEl.paused) {
+        audioEl.play();
+        btn.textContent = '⏸ Pause';
+        btn.classList.add('playing');
+        if (waveformWrap) waveformWrap.classList.add('playing');
+        currentPlayingAudio = audioEl;
+        currentPlayingBtn = btn;
+        currentWaveformWrap = waveformWrap;
+      } else {
+        audioEl.pause();
+        btn.textContent = '▶ Play Note';
+        btn.classList.remove('playing');
+        if (waveformWrap) waveformWrap.classList.remove('playing');
+        currentPlayingAudio = null;
+        currentPlayingBtn = null;
+        currentWaveformWrap = null;
+      }
+
+      audioEl.onended = () => {
+        btn.textContent = '▶ Play Note';
+        btn.classList.remove('playing');
+        if (waveformWrap) waveformWrap.classList.remove('playing');
+        currentPlayingAudio = null;
+        currentPlayingBtn = null;
+        currentWaveformWrap = null;
+      };
+    });
+  });
+}
+
+// ── Record Form Handler ──────────────────────────────────────────────────────
 
 function initRecordForm() {
   const form = document.getElementById('echo-form');
@@ -31,14 +365,14 @@ function initRecordForm() {
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const submitBtn = form.querySelector('[type="submit"]');
+    const submitBtn = document.getElementById('submit-btn') || form.querySelector('[type="submit"]');
 
     submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border-width:2px;display:inline-block"></span> Leaving your Echo…';
+    const origText = submitBtn.textContent;
+    submitBtn.textContent = 'Saving Echo...';
 
     const formData = new FormData(form);
 
-    // If there is an in-memory recorded blob from the mic, append it directly
     const recordedBlob = (typeof EchoRecorder !== 'undefined' && EchoRecorder.getBlob) ? EchoRecorder.getBlob() : null;
     const uploadedFile = document.getElementById('audio-upload')?.files?.[0];
 
@@ -48,143 +382,71 @@ function initRecordForm() {
       formData.set('audio', uploadedFile);
     }
 
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border-width:2px;display:inline-block"></span> Saving & Transcribing…';
-
     try {
       const res = await fetch('/record', { method: 'POST', body: formData });
       const data = await res.json();
 
       if (data.status === 'created') {
-        showAlert('👻 Echo preserved. Your knowledge will live on.', 'success');
-        const transcriptBox = document.getElementById('transcript-preview');
-        if (transcriptBox && data.transcript) {
-          transcriptBox.textContent = data.transcript;
-          document.getElementById('transcript-preview-container').classList.remove('hidden');
-        }
+        showAlert('Echo preserved. Your advice has been added to the knowledge base.', 'success');
         form.reset();
-        // Reset category picker
-        document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('selected'));
         const preview = document.getElementById('audio-preview');
         if (preview) { preview.src = ''; preview.classList.add('hidden'); }
-        // Reset equalizer
+        const timer = document.getElementById('recording-timer');
+        if (timer) timer.textContent = '00:00';
         const eq = document.getElementById('rec-equalizer');
         if (eq) eq.classList.remove('active');
-
+        const status = document.getElementById('recording-status');
+        if (status) status.textContent = 'Ready to record';
+        setTimeout(() => {
+          window.location.href = `/echoes/${data.echo_id}`;
+        }, 1200);
       } else if (data.status === 'confirmed') {
-        showAlert('👻 A similar Echo already exists — confirmation count bumped!', 'info');
-
-      } else if (data.status === 'needs_transcript') {
-        showAlert('⚠ Transcription unavailable. Please type your transcript below.', 'warning');
-        const manualArea = document.getElementById('manual-transcript-area');
-        if (manualArea) manualArea.classList.remove('hidden');
-
+        showAlert('A similar Echo exists — confirmation count increased.', 'info');
+        setTimeout(() => { window.location.href = '/echoes'; }, 1200);
       } else {
-        showAlert(data.error || 'Something went wrong.', 'error');
+        showAlert(data.error || 'Could not save Echo. Please check fields.', 'error');
       }
     } catch (err) {
-      showAlert('Network error — check your connection.', 'error');
+      showAlert('Network error while saving Echo.', 'error');
     } finally {
       submitBtn.disabled = false;
-      submitBtn.innerHTML = '👻 Leave Your Echo';
+      submitBtn.textContent = origText;
     }
   });
 }
 
-// ── Search form / scanning animation ─────────────────────────────────────────
+// ── Trust Votes (Helpful / Not Helpful) ──────────────────────────────────────
 
-function initSearchForm() {
-  const form = document.getElementById('search-form');
-  if (!form) return;
+function initTrustVotes() {
+  document.querySelectorAll('.trust-btn').forEach(btn => {
+    const echoId = btn.dataset.echoId;
+    const vote = btn.dataset.vote;
+    const key = `echo-trust-${echoId}`;
+    const stored = localStorage.getItem(key);
 
-  form.addEventListener('submit', (e) => {
-    const q = form.querySelector('input[name="q"]').value.trim();
-    if (!q) {
-      e.preventDefault();
-      showAlert('Please enter a question first.', 'warning');
-      return;
+    if (stored === vote) {
+      btn.classList.add(vote === 'yes' ? 'voted-yes' : 'voted-no', 'active');
     }
 
-    // Show scanning animation on the /search page (not /results)
-    const scanEl = document.getElementById('search-scanning');
-    if (scanEl) {
-      scanEl.classList.add('visible');
-      const steps = ['scan-1', 'scan-2', 'scan-3', 'scan-4'];
-      steps.forEach((id, i) => {
-        setTimeout(() => {
-          const el = document.getElementById(id);
-          if (!el) return;
-          steps.slice(0, i).forEach(prev => {
-            const p = document.getElementById(prev);
-            if (p) { p.classList.remove('active'); p.classList.add('done'); }
-          });
-          el.classList.add('active');
-        }, i * 280);
+    btn.addEventListener('click', () => {
+      const current = localStorage.getItem(key);
+
+      document.querySelectorAll(`.trust-btn[data-echo-id="${echoId}"]`).forEach(b => {
+        b.classList.remove('voted-yes', 'voted-no', 'active');
       });
-    }
-  });
-}
 
-// ── Similarity bar animation ──────────────────────────────────────────────────
-
-function animateSimilarityBars() {
-  const bars = document.querySelectorAll('.similarity-fill[data-width]');
-  if (!bars.length) return;
-
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        const bar = entry.target;
-        setTimeout(() => {
-          bar.style.width = bar.dataset.width + '%';
-        }, 200);
-        observer.unobserve(bar);
+      if (current === vote) {
+        localStorage.removeItem(key);
+      } else {
+        localStorage.setItem(key, vote);
+        btn.classList.add(vote === 'yes' ? 'voted-yes' : 'voted-no', 'active');
+        showAlert(vote === 'yes' ? 'Marked as helpful.' : 'Feedback recorded.', 'info');
       }
     });
-  }, { threshold: 0.2 });
-
-  bars.forEach(bar => {
-    bar.style.width = '0%';
-    observer.observe(bar);
   });
 }
 
-// ── Consensus bar animation ───────────────────────────────────────────────────
-
-function animateConsensusBar() {
-  const fill = document.getElementById('consensus-bar-fill');
-  if (!fill) return;
-
-  const pct = parseInt(fill.dataset.pct || '75', 10);
-
-  setTimeout(() => {
-    fill.style.width = pct + '%';
-    const agreeEl = document.getElementById('consensus-agree-pct');
-    const disagreeEl = document.getElementById('consensus-disagree-pct');
-    if (agreeEl) agreeEl.textContent = pct + '% agree';
-    if (disagreeEl) disagreeEl.textContent = (100 - pct) + '% add nuance';
-  }, 400);
-}
-
-// ── Expand transcript ─────────────────────────────────────────────────────────
-
-function initExpandTranscripts() {
-  document.querySelectorAll('.expand-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const targetId = btn.dataset.target;
-      const body = targetId
-        ? document.getElementById(targetId)
-        : btn.previousElementSibling;
-
-      if (!body) return;
-
-      const isExpanded = body.classList.toggle('expanded');
-      btn.textContent = isExpanded ? 'Show less ↑' : 'Read more ↓';
-    });
-  });
-}
-
-// ── Seed demo data button ─────────────────────────────────────────────────────
+// ── Dev Seed Button ─────────────────────────────────────────────────────────
 
 function initSeedButton() {
   const btn = document.getElementById('seed-btn');
@@ -192,196 +454,18 @@ function initSeedButton() {
 
   btn.addEventListener('click', async () => {
     btn.disabled = true;
-    btn.textContent = 'Seeding…';
+    btn.textContent = 'Seeding demo data...';
     try {
       const res = await fetch('/seed', { method: 'POST' });
       const data = await res.json();
-      showAlert(data.message, 'success');
-      setTimeout(() => location.reload(), 1500);
+      showAlert(data.message || 'Demo data loaded.', 'success');
+      setTimeout(() => location.reload(), 1000);
     } catch (err) {
-      showAlert('Seed failed. Check console.', 'error');
+      showAlert('Seed failed. Check server log.', 'error');
     } finally {
       btn.disabled = false;
-      btn.textContent = '🌱 Seed Demo Data';
+      btn.textContent = 'Seed Demo Data';
     }
-  });
-}
-
-// ── Counter animation ─────────────────────────────────────────────────────────
-
-function animateCounter(el) {
-  const target = parseInt(el.dataset.count || el.textContent, 10);
-  if (isNaN(target) || target === 0) return;
-  let start = 0;
-  const duration = 900;
-  const startTime = performance.now();
-  const step = (now) => {
-    const progress = Math.min((now - startTime) / duration, 1);
-    const ease = 1 - Math.pow(1 - progress, 3); // cubic ease-out
-    const value = Math.floor(ease * target);
-    el.textContent = value;
-    if (progress < 1) requestAnimationFrame(step);
-    else el.textContent = target;
-  };
-  requestAnimationFrame(step);
-}
-
-// ── Scroll-reveal animations (step cards, etc.) ───────────────────────────────
-
-function initScrollAnimations() {
-  const targets = document.querySelectorAll('.step-card, .ghost-card');
-  if (!targets.length) return;
-
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry, i) => {
-      if (entry.isIntersecting) {
-        setTimeout(() => {
-          entry.target.classList.add('revealed');
-        }, 80 * i);
-        observer.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.12 });
-
-  targets.forEach(el => observer.observe(el));
-}
-
-// ── Ghost Card — Why this answer? ─────────────────────────────────────────────
-
-const STOP_WORDS = new Set([
-  'a','an','the','is','it','in','of','for','to','and','or','not','do',
-  'does','how','what','when','where','who','why','was','are','been',
-  'has','have','had','with','from','that','this','these','those','be',
-  'will','can','could','should','would','my','your','his','her','their',
-  'our','we','i','me','he','she','they','you','about','like','very',
-  'so','if','but','than','then','at','by','on','up','out','as','any'
-]);
-
-function extractKeywords(query) {
-  return query.toLowerCase()
-    .replace(/[^a-z0-9\s]/g, '')
-    .split(/\s+/)
-    .filter(w => w.length > 2 && !STOP_WORDS.has(w));
-}
-
-function initGhostCards() {
-  // "Why this answer?" toggles
-  document.querySelectorAll('.why-trigger').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = btn.dataset.echoId;
-      const content = document.getElementById(`why-content-${id}`);
-      if (!content) return;
-
-      const isOpen = content.classList.toggle('open');
-      btn.classList.toggle('open', isOpen);
-
-      // Populate keywords on first open
-      const kwEl = document.getElementById(`why-keywords-${id}`);
-      if (kwEl && kwEl.children.length === 0) {
-        const query = kwEl.dataset.query || '';
-        const kws = extractKeywords(query);
-        kws.forEach(kw => {
-          const span = document.createElement('span');
-          span.className = 'why-keyword';
-          span.textContent = kw;
-          kwEl.appendChild(span);
-        });
-        if (kws.length === 0) {
-          kwEl.innerHTML = '<span style="color: var(--text-muted); font-size:0.75rem;">No distinct keywords</span>';
-        }
-      }
-    });
-  });
-
-  // Trust votes
-  document.querySelectorAll('.trust-btn').forEach(btn => {
-    const echoId = btn.dataset.echoId;
-    const vote = btn.dataset.vote;
-    const key = `echo-trust-${echoId}`;
-    const stored = localStorage.getItem(key);
-    if (stored === vote) btn.classList.add(vote === 'yes' ? 'voted-yes' : 'voted-no');
-
-    btn.addEventListener('click', () => {
-      const current = localStorage.getItem(key);
-
-      // Remove sibling votes
-      document.querySelectorAll(`.trust-btn[data-echo-id="${echoId}"]`).forEach(b => {
-        b.classList.remove('voted-yes', 'voted-no');
-      });
-
-      if (current === vote) {
-        localStorage.removeItem(key);
-      } else {
-        localStorage.setItem(key, vote);
-        btn.classList.add(vote === 'yes' ? 'voted-yes' : 'voted-no');
-        const msg = vote === 'yes'
-          ? '❤ Marked as useful — thanks!'
-          : '👎 Noted. Knowledge may have changed.';
-        showAlert(msg, vote === 'yes' ? 'success' : 'info');
-      }
-    });
-  });
-
-  // Audio play buttons with waveform
-  document.querySelectorAll('.play-btn').forEach(btn => {
-    const echoId = btn.dataset.echoId;
-    const audioEl = document.getElementById(`audio-${echoId}`) || document.getElementById(`echoes-audio-el-${echoId}`);
-    const waveform = document.getElementById(`waveform-${echoId}`) || document.getElementById(`echoes-waveform-${echoId}`);
-    const timeEl = document.getElementById(`audio-time-${echoId}`) || document.getElementById(`echoes-time-${echoId}`);
-    const card = btn.closest('.ghost-card');
-
-    if (!audioEl) return;
-
-    function formatTime(s) {
-      const m = Math.floor(s / 60);
-      const sec = Math.floor(s % 60);
-      return `${m}:${sec.toString().padStart(2,'0')}`;
-    }
-
-    btn.addEventListener('click', () => {
-      // Pause all other audios
-      document.querySelectorAll('.play-btn').forEach(b => {
-        if (b !== btn) {
-          const otherId = b.dataset.echoId;
-          const otherAudio = document.getElementById(`audio-${otherId}`) || document.getElementById(`echoes-audio-el-${otherId}`);
-          const otherWave = document.getElementById(`waveform-${otherId}`) || document.getElementById(`echoes-waveform-${otherId}`);
-          const otherCard = b.closest('.ghost-card');
-          if (otherAudio && !otherAudio.paused) {
-            otherAudio.pause();
-            b.textContent = '▶';
-            b.classList.remove('playing');
-            if (otherWave) otherWave.classList.remove('playing');
-            if (otherCard) otherCard.classList.remove('playing');
-          }
-        }
-      });
-
-      if (audioEl.paused) {
-        audioEl.play();
-        btn.textContent = '⏸';
-        btn.classList.add('playing');
-        if (waveform) waveform.classList.add('playing');
-        if (card) card.classList.add('playing');
-      } else {
-        audioEl.pause();
-        btn.textContent = '▶';
-        btn.classList.remove('playing');
-        if (waveform) waveform.classList.remove('playing');
-        if (card) card.classList.remove('playing');
-      }
-    });
-
-    audioEl.addEventListener('timeupdate', () => {
-      if (timeEl) timeEl.textContent = formatTime(audioEl.currentTime);
-    });
-
-    audioEl.addEventListener('ended', () => {
-      btn.textContent = '▶';
-      btn.classList.remove('playing');
-      if (waveform) waveform.classList.remove('playing');
-      if (card) card.classList.remove('playing');
-      if (timeEl) timeEl.textContent = '0:00';
-    });
   });
 }
 
@@ -431,61 +515,12 @@ function initRecordingUI() {
   observer.observe(recordBtn, { attributes: true, attributeFilter: ['class'] });
 }
 
-// ── Echoes page — client-side filter + sort ───────────────────────────────────
-
-function initEchoFilters() {
-  const filterBar = document.getElementById('filter-bar');
-  const grid = document.getElementById('echoes-grid');
-  if (!filterBar || !grid) return;
-
-  const filterMap = {
-    all: () => true,
-    course: (el) => !['lab','campus','hostel','portal','library','placement','internship'].some(t =>
-      el.dataset.course.includes(t) || el.dataset.topic.includes(t)),
-    professor: (el) => el.dataset.topic.includes('professor') || el.querySelectorAll('.tag-professor').length > 0,
-    lab: (el) => el.dataset.topic.includes('lab') || el.dataset.course.includes('lab'),
-    campus: (el) => ['hostel','campus','wifi','portal','library'].some(t =>
-      el.dataset.course.includes(t) || el.dataset.topic.includes(t)),
-    whatsapp: (el) => el.dataset.source === 'whatsapp',
-  };
-
-  // Filter pills
-  filterBar.querySelectorAll('.filter-pill').forEach(pill => {
-    pill.addEventListener('click', () => {
-      filterBar.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
-      pill.classList.add('active');
-      const filter = filterMap[pill.dataset.filter] || filterMap.all;
-      grid.querySelectorAll('.ghost-card').forEach(card => {
-        card.style.display = filter(card) ? '' : 'none';
-      });
-    });
-  });
-
-  // Sort buttons
-  filterBar.querySelectorAll('.sort-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      filterBar.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-
-      const cards = [...grid.querySelectorAll('.ghost-card')];
-      if (btn.dataset.sort === 'recent') {
-        cards.sort((a, b) => (b.dataset.created || '').localeCompare(a.dataset.created || ''));
-      } else if (btn.dataset.sort === 'fresh') {
-        const order = { fresh: 0, aging: 1, stale: 2 };
-        cards.sort((a, b) => (order[a.dataset.health] || 0) - (order[b.dataset.health] || 0));
-      }
-      cards.forEach(c => grid.appendChild(c));
-    });
-  });
-}
-
 // ── Live Feed: poll for new WhatsApp echoes ───────────────────────────────────
 
 let _liveFeedLastId = null;
 
 function initLiveFeed() {
-  // Only run on pages with a stats bar or echoes grid (home + echoes pages)
-  const hasStats = document.querySelector('.stats-bar, .echoes-grid');
+  const hasStats = document.querySelector('.stats-bar, .echoes-grid, .echoes-dynamic-grid');
   if (!hasStats) return;
 
   async function checkFeed() {
@@ -497,14 +532,12 @@ function initLiveFeed() {
 
       const newest = echoes[0];
       if (_liveFeedLastId === null) {
-        // First poll — just record latest id, don't alert
         _liveFeedLastId = newest.id;
         return;
       }
 
       if (newest.id !== _liveFeedLastId) {
         _liveFeedLastId = newest.id;
-        // Show toast for new entries
         const src = newest.source === 'whatsapp' ? '💬 WhatsApp' : newest.source === 'reddit' ? '🔴 Reddit' : '🎙 Web';
         const shortTranscript = (newest.transcript || '').slice(0, 60);
         showAlert(
@@ -512,11 +545,10 @@ function initLiveFeed() {
           'success'
         );
 
-        // Refresh stat counters on home page
         const statsRes = await fetch('/api/stats');
         if (statsRes.ok) {
           const stats = await statsRes.json();
-          const echoCountEl = document.querySelector('.stat-value[data-count]');
+          const echoCountEl = document.querySelector('.stat-value[data-count], .stat-num[data-count]');
           if (echoCountEl) {
             echoCountEl.dataset.count = stats.total_echoes;
             echoCountEl.textContent = stats.total_echoes;
@@ -528,13 +560,9 @@ function initLiveFeed() {
     }
   }
 
-  // Initial check + poll every 8 seconds
   checkFeed();
   setInterval(checkFeed, 8000);
 }
-
-// ── Hero chips → search navigation ───────────────────────────────────────────
-// (Handled inline via href="/results?q=..." in index.html, no JS needed)
 
 // ── Re-verify stale Echo button ───────────────────────────────────────────────
 
@@ -555,7 +583,7 @@ function initReverifyButtons() {
           showAlert('✓ Echo re-verified! Freshness score boosted.', 'success');
           const badge = document.getElementById(`health-badge-${echoId}`);
           if (badge && data.health) {
-            badge.className = `health-badge health-${data.health.status}`;
+            badge.className = `health-pill health-${data.health.status}`;
             badge.textContent = data.health.label;
           }
           const box = document.getElementById(`stale-box-${echoId}`);
@@ -579,28 +607,22 @@ function initReverifyButtons() {
   });
 }
 
-// ── Init ──────────────────────────────────────────────────────────────────────
+// ── Bootstrap ────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
+  initScrollReveal();
+  animateCounters();
+  initSearchScanning();
+  initEchoesArchive();
+  initGapsFilter();
   initRecordForm();
-  initSearchForm();
-  animateSimilarityBars();
-  animateConsensusBar();
-  initExpandTranscripts();
+  initAudioPlayers();
+  initTrustVotes();
   initSeedButton();
-  initGhostCards();
   initCategoryPicker();
   initRecordingUI();
-  initEchoFilters();
-  initScrollAnimations();
   initLiveFeed();
   initReverifyButtons();
-
-  // Animate stat counters
-  document.querySelectorAll('.stat-value[data-count]').forEach(el => {
-    el.textContent = el.dataset.count;
-    animateCounter(el);
-  });
 
   // Echo counter on search page
   const echoCountEl = document.getElementById('echo-count-display');
@@ -616,4 +638,3 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 });
-

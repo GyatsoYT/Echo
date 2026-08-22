@@ -1,87 +1,130 @@
 {% extends "base.html" %}
-{% block title %}Ask Ghosts{% endblock %}
-{% block description %}Ask anything in plain language. Echo searches what seniors left behind — semantically, not by keyword.{% endblock %}
+{% block title %}Ask ECHO — SST Semantic Knowledge Search{% endblock %}
+{% block description %}Search preserved advice, dual-degree tips, and SIL lab setups across senior voice notes.{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width: 740px;">
+<div class="container" style="max-width: 1040px; padding: 3rem 1rem 5rem;">
 
-  <!-- Mood header -->
-  <div class="search-mood">
-    <p class="search-mood-text">
-      Ask the people who <strong>already survived it.</strong>
+  <!-- Ask Hero / Mood Header -->
+  <div class="search-mood-wrap reveal-on-scroll">
+    <div class="search-mood-badge">
+      <span class="pulse-beacon"></span>
+      <span>SST SEMANTIC MEMORY RETRIEVAL</span>
+    </div>
+
+    <h1 class="search-mood-title">
+      Ask the seniors who<br>
+      <span class="hero-live-shimmer">already survived SST.</span>
+    </h1>
+
+    <p class="search-mood-desc">
+      ECHO searches through senior voice recordings and notes semantically to uncover advice on CS & AI coursework, IITM/BITS dual-degree balance, SIL lab setups, and industry immersion.
     </p>
 
     <!-- Main search form -->
-    <form action="/results" method="GET" id="search-form" style="position: relative;">
-      <div class="search-box" style="max-width: 100%;">
-        <span class="search-ghost-icon">👻</span>
+    <form action="/results" method="GET" id="search-form" class="search-fancy-form">
+      <div class="hero-search-wrap">
+        <div class="search-icon-slot">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="search-svg-icon">
+            <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2.2"/>
+            <path d="M20 20L16 16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+          </svg>
+        </div>
         <input
           type="text"
           name="q"
           id="main-search"
-          class="search-input"
-          placeholder="What do you wish you knew before taking this course?"
+          class="hero-search-input"
+          placeholder="Ask anything (e.g. IIT Madras BS balance, SIL GPU cluster, GSoC prep, Anshuman interview tips)"
           autocomplete="off"
           autofocus
+          required
         />
-        <button type="submit" class="search-btn" id="search-submit-btn">Ask →</button>
+        <button type="submit" class="btn btn-primary hero-search-btn" id="search-submit-btn">
+          <span>Search</span>
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+            <path d="M6 3L11 8L6 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
       </div>
 
-      <!-- Scanning animation (shown on submit) -->
+      <!-- Scanning animation (activated on search submit) -->
       <div class="search-scanning" id="search-scanning">
         <div class="scan-step" id="scan-1">
           <span class="scan-dot"></span>
-          <span>Scanning seniors</span>
+          <span>Scanning SST senior memory vault...</span>
         </div>
         <div class="scan-step" id="scan-2">
           <span class="scan-dot"></span>
-          <span>Matching experiences</span>
+          <span>Matching semantic embeddings...</span>
         </div>
         <div class="scan-step" id="scan-3">
           <span class="scan-dot"></span>
-          <span>Finding consensus</span>
+          <span>Synthesising consensus answer...</span>
         </div>
         <div class="scan-step" id="scan-4">
           <span class="scan-dot"></span>
-          <span>Checking freshness</span>
+          <span>Checking freshness & decay score...</span>
         </div>
       </div>
     </form>
 
-    <!-- Echo counter -->
-    <p class="search-counter" id="search-counter">
-      Searching across <span id="echo-count-display">{{ total_echoes }}</span> Echoes
-    </p>
+    <!-- Echo Counter -->
+    <div class="search-vault-meta">
+      <span>Indexed across <strong>{{ total_echoes }}</strong> preserved SST senior memories</span>
+    </div>
   </div>
 
-  <!-- Whisper chips — example questions -->
-  <div style="margin-bottom: 2.5rem;">
-    <p style="text-align:center; font-family: 'Space Mono', monospace; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.875rem;">
-      Seniors have answered these
-    </p>
-    <div class="whisper-chips" id="whisper-chips">
+  <!-- Interactive Whisper Chips -->
+  <div class="whisper-chips-section reveal-on-scroll">
+    <div class="whisper-header">
+      <span class="whisper-title">POPULAR QUESTIONS SST SENIORS HAVE ANSWERED</span>
+      <span class="whisper-hint">Click any query to search instantly</span>
+    </div>
+
+    <div class="whisper-chips-grid" id="whisper-chips">
       {% for q in [
-        "How does Prof. Mehta grade assignments?",
-        "Is the EC202 lab reliable?",
-        "When does the student portal crash?",
-        "How to prepare for Math101 exams?",
-        "What hostel block has the best wifi?",
-        "How to access IEEE journals for free?"
+        "How to balance IIT Madras BS degree with SST project sprints?",
+        "How did NeoSapiens incubate an AI pendant at SIL and get funded on Shark Tank India?",
+        "How did students get selected for Apple Academy Bali in Year 2?",
+        "How to secure international internships in Singapore with 2 lakh monthly stipend?",
+        "How did 14 SST students get selected for GSoC 2026?",
+        "What lessons did the Odyssey newsletter highlight on DSA pressure and plagiarism?",
+        "How did Team AntarDrishti win Smart India Hackathon and reach PyTorch finals?",
+        "How to pitch startups for the 2 Crore seed fund in AI and Business?"
       ] %}
       <button
         type="button"
-        class="whisper-chip"
-        id="whisper-{{ loop.index }}"
-        onclick="document.getElementById('main-search').value = '{{ q }}'; document.getElementById('search-form').submit();"
-      >{{ q }}</button>
+        class="whisper-chip-card"
+        onclick="const input = document.getElementById('main-search'); input.value = '{{ q }}'; document.getElementById('search-form').submit();"
+      >
+        <span class="chip-query-text">"{{ q }}"</span>
+        <svg class="chip-query-arrow" width="14" height="14" viewBox="0 0 16 16" fill="none">
+          <path d="M6 3L11 8L6 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
       {% endfor %}
     </div>
   </div>
 
-  <!-- Semantic note -->
-  <p class="search-semantic-note">
-    This isn't keyword search. Echo understands meaning.
-  </p>
+  <!-- Semantic Intelligence Feature Highlights -->
+  <div class="search-intel-grid reveal-on-scroll">
+    <div class="intel-card">
+      <div class="intel-icon">⚡</div>
+      <h4>SST Semantic Matching</h4>
+      <p>Echo maps the underlying meaning of technical questions across CS & AI, IITM BS, and SIL modules.</p>
+    </div>
+    <div class="intel-card">
+      <div class="intel-icon">🛡</div>
+      <h4>Consensus Engine</h4>
+      <p>Synthesises advice from multiple seniors into an actionable summary, highlighting verified strategies.</p>
+    </div>
+    <div class="intel-card">
+      <div class="intel-icon">⏳</div>
+      <h4>Freshness Tracking</h4>
+      <p>Calculates memory health dynamically so you know if grading rubrics or curriculum formats have changed.</p>
+    </div>
+  </div>
 
 </div>
 {% endblock %}

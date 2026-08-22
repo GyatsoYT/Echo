@@ -1,223 +1,240 @@
 {% extends "base.html" %}
-{% block title %}Leave an Echo{% endblock %}
-{% block description %}Record or type your hard-earned institutional knowledge as an Echo for future students.{% endblock %}
+{% block title %}Record an Echo — SST Senior Knowledge Studio{% endblock %}
+{% block description %}Preserve your SST course experience, dual-degree survival tips, and placement advice for junior batches.{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width: 680px;">
+<div class="container" style="max-width: 780px; padding: 2.5rem 1rem 5rem;">
 
-  <!-- Dramatic header -->
-  <div style="text-align: center; padding: 3rem 0 2.5rem;">
-    <span class="page-eyebrow">👻 CAMPUS SURVIVAL ARCHIVE</span>
-    <h1 style="font-size: clamp(2rem, 5vw, 3rem); margin-bottom: 0.75rem; line-height: 1.1;">
-      Leave something<br><span class="highlight">behind.</span>
-    </h1>
-    <p style="color: var(--text-secondary); font-size: 1rem; max-width: 400px; margin: 0 auto; line-height: 1.75;">
-      Future-you won't be here.<br>
-      But your experience can be.
+  <!-- Page Header -->
+  <div class="record-hero-header reveal-on-scroll">
+    <div class="record-badge">
+      <span class="pulse-beacon"></span>
+      <span>SST GHOST MENTOR CONTRIBUTION STUDIO</span>
+    </div>
+    <h1 class="record-main-title">Preserve What You Learned at SST</h1>
+    <p class="record-sub-desc">
+      Your voice note or written advice will be indexed semantically and preserved for juniors navigating CS & AI, IIT Madras/BITS dual degrees, SIL labs, and industry immersion.
     </p>
   </div>
 
-  <!-- Success transcript preview -->
-  <div id="transcript-preview-container" class="hidden" style="margin-bottom: 1.5rem;">
-    <div class="synthesis-panel">
-      <div class="synthesis-label">✓ Echo captured — it will live longer than your graduation</div>
-      <p class="synthesis-text" id="transcript-preview"></p>
-    </div>
-  </div>
+  <form id="echo-form" enctype="multipart/form-data" class="record-form-wrap">
 
-  <form id="echo-form" enctype="multipart/form-data">
-
-    <!-- ① Category picker -->
-    <div style="margin-bottom: 1.5rem;">
-      <p style="font-family:'Space Mono',monospace; font-size:0.65rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-muted); margin-bottom:0.75rem;">
-        What are you recording?
-      </p>
-      <div class="category-picker" id="category-picker">
-        <button type="button" class="category-btn" data-value="exams" id="cat-exams">📚 Exams</button>
-        <button type="button" class="category-btn" data-value="lab" id="cat-lab">🧪 Lab</button>
-        <button type="button" class="category-btn" data-value="professor" id="cat-prof">👨‍🏫 Professor</button>
-        <button type="button" class="category-btn" data-value="campus" id="cat-campus">🏫 Campus</button>
-        <button type="button" class="category-btn" data-value="assignments" id="cat-assignments">📝 Assignments</button>
-        <button type="button" class="category-btn" data-value="grading" id="cat-grading">📊 Grading</button>
-        <button type="button" class="category-btn" data-value="placement" id="cat-placement">🚀 Placement</button>
-        <button type="button" class="category-btn" data-value="general" id="cat-general">✨ General</button>
-      </div>
-    </div>
-
-    <!-- ② Recording area -->
-    <div class="card" style="margin-bottom: 1.25rem;">
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.125rem;">
-        <h3 style="font-size:1rem; margin:0;">🎙 Record your voice</h3>
-        <span style="font-family:'Space Mono',monospace; font-size:0.65rem; color:var(--text-muted); letter-spacing:0.08em; text-transform:uppercase;">Audio note</span>
-      </div>
-
-      <div class="recorder-area" id="recorder-area">
-        <!-- Equalizer (visible while recording) -->
-        <div class="rec-equalizer" id="rec-equalizer">
-          <div class="rec-eq-bar" style="height:8px;"></div>
-          <div class="rec-eq-bar" style="height:16px;"></div>
-          <div class="rec-eq-bar" style="height:24px;"></div>
-          <div class="rec-eq-bar" style="height:12px;"></div>
-          <div class="rec-eq-bar" style="height:20px;"></div>
+    <!-- 1. Interactive Category Picker -->
+    <div class="form-section-card reveal-on-scroll">
+      <div class="card-section-header">
+        <div class="step-num-circle">1</div>
+        <div>
+          <h3 class="card-section-title">Select Experience Category</h3>
+          <span class="card-section-caption">What domain of SST campus knowledge are you preserving?</span>
         </div>
-
-        <button type="button" class="record-btn" id="record-btn" title="Start recording">🎙</button>
-
-        <div style="text-align:center;">
-          <p class="recording-status" id="recording-status">Click to record your legacy</p>
-          <p class="recording-timer-large" id="recording-timer">00:00</p>
-        </div>
-
-        <audio class="audio-preview hidden" id="audio-preview" controls></audio>
       </div>
 
-      <!-- Hidden recorder.js target -->
-      <input type="file" id="audio-file-input" name="audio" accept="audio/*" class="hidden" />
-
-      <!-- Custom file upload -->
-      <div style="margin-top:1.125rem; position:relative;">
-        <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.75rem;">
-          <div style="flex:1; height:1px; background:var(--border);"></div>
-          <span style="font-size:0.75rem; color:var(--text-muted); font-family:'Space Mono',monospace; letter-spacing:0.06em;">OR</span>
-          <div style="flex:1; height:1px; background:var(--border);"></div>
-        </div>
-        <label class="file-upload-label" for="audio-upload" id="file-upload-label">
-          <span class="file-icon">📁</span>
-          <span class="file-text">
-            <strong id="file-name-display">Upload an audio file</strong>
-            <span>MP3, WAV, M4A, OGG — any format</span>
-          </span>
-          <span class="file-btn">Browse</span>
-        </label>
-        <input type="file" id="audio-upload" name="audio" accept="audio/*" class="hidden-file-input" />
-      </div>
-    </div>
-
-    <!-- ③ Tags -->
-    <div class="card" style="margin-bottom:1.25rem;">
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.125rem;">
-        <h3 style="font-size:1rem; margin:0;">🏷 Tag your Echo</h3>
-        <span style="font-family:'Space Mono',monospace; font-size:0.65rem; color:var(--text-muted); letter-spacing:0.08em; text-transform:uppercase;">Helps search find it</span>
+      <div class="record-category-picker" id="category-picker">
+        <button type="button" class="category-select-pill active" data-category="CS & AI" data-placeholder="e.g. CS & AI Year 1, Java fundamentals, DSA, System design">
+          <span>💻 CS & AI Coursework</span>
+        </button>
+        <button type="button" class="category-select-pill" data-category="Dual Degree" data-placeholder="e.g. IIT Madras BS in Data Science, BITS Pilani BSc Hons CS, Assignment deadlines">
+          <span>🎓 Dual Degree (IITM / BITS)</span>
+        </button>
+        <button type="button" class="category-select-pill" data-category="Innovation Lab" data-placeholder="e.g. Scaler Innovation Lab (SIL), GPU Cluster, Robotics, PyTorch setups">
+          <span>🔬 SIL Innovation Lab</span>
+        </button>
+        <button type="button" class="category-select-pill" data-category="AI & Business" data-placeholder="e.g. AI & Business track, 6-Month startup building, ₹2 Cr seed fund pitch">
+          <span>💼 AI & Business Startups</span>
+        </button>
+        <button type="button" class="category-select-pill" data-category="Projects" data-placeholder="e.g. 48-hour hackathon sprints, Git merge conflicts, Benchmark deadlines">
+          <span>⚡ Dev Projects & Sprints</span>
+        </button>
+        <button type="button" class="category-select-pill" data-category="Placements" data-placeholder="e.g. Year 4 Industry Immersion, ₹2L/mo internships, GSoC prep, ICPC">
+          <span>🚀 Placements & GSoC Prep</span>
+        </button>
       </div>
 
-      <div class="form-group">
-        <label class="form-label" for="course_tag">
-          Course Code <span style="color:var(--red); font-style:normal;">*</span>
-        </label>
-        <div class="field-wrap">
-          <span class="field-icon">◈</span>
+      <!-- Course & Metadata Inputs -->
+      <div class="form-row" style="margin-top: 1.25rem;">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" for="course_tag">
+            Track / Course / Module <span class="required-star">*</span>
+          </label>
           <input
             type="text"
             id="course_tag"
             name="course_tag"
             class="form-input"
-            placeholder="e.g. CS301, MATH101, portal, hostel"
+            placeholder="e.g. CS & AI, IIT Madras BS, Scaler Innovation Lab"
             required
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" for="professor_tag">
+            Instructor / Mentor / Lead (Optional)
+          </label>
+          <input
+            type="text"
+            id="professor_tag"
+            name="professor_tag"
+            class="form-input"
+            placeholder="e.g. Anshuman Singh, Tushar Bisht, Vidit Jain, BSM"
             autocomplete="off"
           />
         </div>
       </div>
 
-      <div class="form-row">
-        <div class="form-group" style="margin-bottom:0;">
-          <label class="form-label" for="professor_tag">Professor</label>
-          <div class="field-wrap">
-            <span class="field-icon">👨‍🏫</span>
-            <input
-              type="text"
-              id="professor_tag"
-              name="professor_tag"
-              class="form-input"
-              placeholder="e.g. Prof. Mehta"
-              autocomplete="off"
-            />
-          </div>
+      <div class="form-group" style="margin-top: 1rem; margin-bottom: 0;">
+        <label class="form-label" for="topic_tag">Specific Topic / Tag (Optional)</label>
+        <input
+          type="text"
+          id="topic_tag"
+          name="topic_tag"
+          class="form-input"
+          placeholder="e.g. IITM Wednesday Deadline Sync, GPU Cluster Booking, GSoC Proposal"
+          autocomplete="off"
+        />
+      </div>
+    </div>
+
+    <!-- 2. Voice Recording Studio -->
+    <div class="form-section-card reveal-on-scroll">
+      <div class="card-section-header">
+        <div class="step-num-circle">2</div>
+        <div>
+          <h3 class="card-section-title">Voice Recording Studio</h3>
+          <span class="card-section-caption">Record a 30–60 second voice note (transcribed by Whisper automatically).</span>
         </div>
-        <div class="form-group" style="margin-bottom:0;">
-          <label class="form-label" for="topic_tag">Topic</label>
-          <div class="field-wrap">
-            <span class="field-icon">🏷</span>
-            <input
-              type="text"
-              id="topic_tag"
-              name="topic_tag"
-              class="form-input"
-              placeholder="e.g. exams, lab, grading"
-              autocomplete="off"
-            />
+      </div>
+
+      <div class="studio-recorder-box" id="recorder-area">
+        <!-- Live Recording Pulse Rings -->
+        <div class="studio-mic-anchor">
+          <div class="mic-pulse-ring" id="mic-pulse-ring"></div>
+          <button type="button" class="studio-record-btn" id="record-btn" title="Start voice recording">
+            <svg class="record-mic-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <line x1="12" x2="12" y1="19" y2="22"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="studio-timer-row">
+          <span class="studio-timer-digits" id="recording-timer">00:00</span>
+          <span class="studio-status-caption" id="recording-status">Click mic to start recording</span>
+        </div>
+
+        <!-- Equalizer Bars Animation -->
+        <div class="rec-equalizer" id="rec-equalizer">
+          <div class="rec-eq-bar"></div>
+          <div class="rec-eq-bar"></div>
+          <div class="rec-eq-bar"></div>
+          <div class="rec-eq-bar"></div>
+          <div class="rec-eq-bar"></div>
+          <div class="rec-eq-bar"></div>
+          <div class="rec-eq-bar"></div>
+        </div>
+
+        <!-- Audio Preview Player -->
+        <audio class="audio-preview hidden" id="audio-preview" controls></audio>
+      </div>
+
+      <input type="file" id="audio-file-input" name="audio" accept="audio/*" class="hidden" />
+
+      <!-- Or file upload alternative -->
+      <div class="upload-alternative-row">
+        <span class="upload-alt-text">Or upload audio file:</span>
+        <label class="file-upload-simple" for="audio-upload">
+          <span id="file-name-display">Select file (MP3, WAV, M4A, WEBM)...</span>
+          <span class="btn btn-ghost btn-xs">Browse</span>
+        </label>
+        <input type="file" id="audio-upload" name="audio" accept="audio/*" class="hidden-file-input" />
+      </div>
+    </div>
+
+    <!-- 3. Transcript Editor with Inspiration Prompts -->
+    <div class="form-section-card reveal-on-scroll">
+      <div class="card-section-header">
+        <div class="step-num-circle">3</div>
+        <div>
+          <h3 class="card-section-title">Written Advice & Transcript</h3>
+          <span class="card-section-caption">Type directly, or leave to be automatically generated from your voice note.</span>
+        </div>
+      </div>
+
+      <!-- Quick Prompt Idea Starters for SST -->
+      <div class="inspiration-prompts-bar">
+        <span class="inspiration-label">Need inspiration? Click an SST starter:</span>
+        <div class="inspiration-chips">
+          <button type="button" class="inspiration-chip" data-prompt="Balancing SST project sprints with IIT Madras BS Data Science: IITM weekly graded assignments are due every Wednesday night. Finish them on Tuesday so you don't get trapped when SST hackathons kick off...">
+            💡 Dual-Degree (IITM/BITS) Survival Formula
+          </button>
+          <button type="button" class="inspiration-chip" data-prompt="Scaler Innovation Lab (SIL) has dedicated GPU clusters for model training. Always book cluster compute via SST Dashboard before 5 PM because night queues fill up during evaluation weeks...">
+            💡 SIL Innovation Lab & GPU Cluster Secrets
+          </button>
+          <button type="button" class="inspiration-chip" data-prompt="For securing international internships in Singapore (like Kanan's ₹2L/mo role) or Apple Academy Bali: Focus on backend systems (Scala/Go/Rust), production Docker containers, and live architecture demos...">
+            💡 Singapore Internships & Apple Academy Bali
+          </button>
+          <button type="button" class="inspiration-chip" data-prompt="When pitching hardware/AI startups for the ₹2 Crore seed fund or Shark Tank India (like NeoSapiens AI pendant): Show a working physical prototype, user retention numbers, and customer discovery insights...">
+            💡 Shark Tank India & Seed Fund Pitch Tips
+          </button>
+          <button type="button" class="inspiration-chip" data-prompt="Managing DSA, Linear algebra, web dev, and Micro-MBA sprints: The Odyssey newsletter highlighted that peer reviews in the hostel common room prevent burnout. Never copy code — plagiarism checks on GitHub are strict...">
+            💡 Odyssey Lessons on DSA Stress & Code Hygiene
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 0.5rem;">
+        <textarea
+          id="transcript"
+          name="transcript"
+          class="form-textarea"
+          rows="5"
+          placeholder="e.g. For Year 1 CS & AI, don't rush through syntax. Anshuman's problem sets prioritize time complexity optimization and algorithmic problem solving from day one. Master Java fundamentals and tree traversals before the first internal benchmark."
+        ></textarea>
+      </div>
+
+      <div class="transcript-meta-row">
+        <span class="text-xs text-muted" id="char-counter">0 characters &middot; 0 words</span>
+        <span class="text-xs text-muted">Contributed anonymously as an SST Ghost Mentor</span>
+      </div>
+    </div>
+
+    <!-- 4. Real-Time Memory Card Live Preview -->
+    <div class="live-preview-section reveal-on-scroll">
+      <span class="preview-eyebrow">LIVE ARCHIVE PREVIEW</span>
+      <div class="preview-echo-card">
+        <div class="card-header-row">
+          <div class="card-badges-row">
+            <span class="echo-badge-id">ECHO #NEW</span>
+            <span class="badge-tag" id="preview-course-tag">CS & AI</span>
+            <span class="badge-tag tag-subtle" id="preview-prof-tag">Anshuman Singh</span>
           </div>
+          <span class="health-pill health-fresh">FRESH MEMORY</span>
+        </div>
+
+        <blockquote class="card-quote-teaser" id="preview-quote-body" style="margin: 0.75rem 0;">
+          "Your advice preview will appear here as you type or record..."
+        </blockquote>
+
+        <div class="card-footer-action-row" style="border-top: 1px solid var(--border-subtle); padding-top: 0.5rem;">
+          <div class="card-footer-left">
+            <span class="mentor-dot">●</span>
+            <span>From an SST Ghost Mentor &middot; Today</span>
+          </div>
+          <span class="text-xs text-rust" style="font-weight: 600;">Preserved Forever</span>
         </div>
       </div>
     </div>
 
-    <!-- ④ Manual transcript (hidden by default) -->
-    <div class="hidden" id="manual-transcript-area" style="margin-bottom:1.25rem;">
-      <div class="card">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
-          <h3 style="font-size:1rem; margin:0;">✍ Type your transcript</h3>
-          <button
-            type="button"
-            style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:0.8rem;font-family:'Space Mono',monospace;letter-spacing:0.04em;"
-            onclick="document.getElementById('manual-transcript-area').classList.add('hidden'); document.getElementById('toggle-manual-btn').textContent = '✍ Type instead of recording';"
-          >✕ Close</button>
-        </div>
-        <p style="color:var(--text-secondary); font-size:0.875rem; margin-bottom:1rem; line-height:1.6;">
-          Transcription is unavailable right now. Type what you wanted to say instead.
-        </p>
-        <div class="form-group" style="margin-bottom:0;">
-          <label class="form-label" for="manual_transcript">Your knowledge</label>
-          <textarea
-            id="manual_transcript"
-            name="manual_transcript"
-            class="form-textarea"
-            rows="5"
-            placeholder="What do you wish you knew as a junior student about this course, professor, or topic?"
-          ></textarea>
-        </div>
-      </div>
+    <!-- Submit Action Bar -->
+    <div class="form-submit-row reveal-on-scroll">
+      <button type="submit" class="btn btn-primary btn-lg btn-glow" id="submit-btn">
+        <span>💾 Save Echo to SST Memory Vault</span> &rarr;
+      </button>
+      <a href="/echoes" class="btn btn-ghost btn-sm">Cancel</a>
     </div>
-
-    <!-- Toggle type -->
-    <div style="margin-bottom:1.5rem; text-align:center;">
-      <button
-        type="button"
-        class="btn btn-ghost btn-sm"
-        id="toggle-manual-btn"
-        onclick="
-          const area = document.getElementById('manual-transcript-area');
-          area.classList.toggle('hidden');
-          this.textContent = area.classList.contains('hidden') ? '✍ Type instead of recording' : '✍ Hide text input';
-        "
-      >✍ Type instead of recording</button>
-    </div>
-
-    <!-- Submit -->
-    <button type="submit" class="btn btn-primary btn-full btn-lg" id="submit-btn" style="font-size:1.0625rem; letter-spacing:0.02em;">
-      👻 Leave Your Echo
-    </button>
 
   </form>
-
-  <!-- Tips -->
-  <div style="margin-top:1.75rem; padding:1.25rem 1.375rem; background:rgba(124,58,237,0.05); border-radius:var(--radius-lg); border:1px solid rgba(124,58,237,0.12);">
-    <p style="font-family:'Space Mono',monospace; font-size:0.65rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-muted); margin-bottom:0.875rem;">
-      💡 Tips for a great Echo
-    </p>
-    <ul style="list-style:none; display:flex; flex-direction:column; gap:0.5rem;">
-      <li style="color:var(--text-secondary); font-size:0.875rem; display:flex; gap:0.5rem; line-height:1.5;">
-        <span style="color:var(--purple-400); flex-shrink:0;">→</span>
-        Be specific — "grading" is okay, "he deducts 5% per missing comment" is better
-      </li>
-      <li style="color:var(--text-secondary); font-size:0.875rem; display:flex; gap:0.5rem; line-height:1.5;">
-        <span style="color:var(--purple-400); flex-shrink:0;">→</span>
-        Mention the course code so juniors find it in the right context
-      </li>
-      <li style="color:var(--text-secondary); font-size:0.875rem; display:flex; gap:0.5rem; line-height:1.5;">
-        <span style="color:var(--purple-400); flex-shrink:0;">→</span>
-        Keep it under 2 minutes — focused Echoes work better for search
-      </li>
-    </ul>
-  </div>
 
 </div>
 {% endblock %}
@@ -225,30 +242,94 @@
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/recorder.js') }}"></script>
 <script>
-  EchoRecorder.init({
-    recordBtnId:    'record-btn',
-    statusId:       'recording-status',
-    previewId:      'audio-preview',
-    timerId:        'recording-timer',
-    uploadInputId:  'audio-file-input',
-  });
-
-  // Custom file input label update
-  const fileInput = document.getElementById('audio-upload');
-  const fileNameDisplay = document.getElementById('file-name-display');
-  if (fileInput) {
-    fileInput.addEventListener('change', function () {
-      const name = this.files[0] ? this.files[0].name : 'Upload an audio file';
-      fileNameDisplay.textContent = name;
-      // Clear recorded blob
-      document.getElementById('audio-file-input').value = '';
+  document.addEventListener('DOMContentLoaded', () => {
+    // Initialize Recorder
+    EchoRecorder.init({
+      recordBtnId: 'record-btn',
+      statusId: 'recording-status',
+      previewId: 'audio-preview',
+      timerId: 'recording-timer',
+      uploadInputId: 'audio-file-input'
     });
-  }
 
-  // Make the custom label open file dialog
-  const uploadLabel = document.getElementById('file-upload-label');
-  if (uploadLabel) {
-    uploadLabel.addEventListener('click', () => fileInput.click());
-  }
+    // File upload label updater
+    const upload = document.getElementById('audio-upload');
+    const nameDisplay = document.getElementById('file-name-display');
+    if (upload && nameDisplay) {
+      upload.addEventListener('change', () => {
+        if (upload.files && upload.files[0]) {
+          nameDisplay.textContent = upload.files[0].name;
+        }
+      });
+    }
+
+    // Category Selector
+    const categoryPills = document.querySelectorAll('.category-select-pill');
+    const topicInput = document.getElementById('topic_tag');
+    const courseInput = document.getElementById('course_tag');
+
+    categoryPills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        categoryPills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        if (courseInput && !courseInput.value) {
+          courseInput.value = pill.dataset.category || '';
+        }
+        if (topicInput && !topicInput.value) {
+          topicInput.placeholder = pill.dataset.placeholder || 'e.g. Lab 4 Scheduling';
+        }
+        updateLivePreview();
+      });
+    });
+
+    // Inspiration prompt chips
+    const transcriptArea = document.getElementById('transcript');
+    document.querySelectorAll('.inspiration-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (transcriptArea) {
+          transcriptArea.value = btn.dataset.prompt;
+          transcriptArea.focus();
+          updateLivePreview();
+        }
+      });
+    });
+
+    // Live preview updater & word counter
+    const previewCourse = document.getElementById('preview-course-tag');
+    const previewProf = document.getElementById('preview-prof-tag');
+    const previewQuote = document.getElementById('preview-quote-body');
+    const profInput = document.getElementById('professor_tag');
+    const charCounter = document.getElementById('char-counter');
+
+    function updateLivePreview() {
+      if (previewCourse) {
+        previewCourse.textContent = courseInput?.value.trim() || 'CS & AI';
+      }
+      if (previewProf) {
+        const pval = profInput?.value.trim();
+        if (pval) {
+          previewProf.textContent = pval;
+          previewProf.style.display = '';
+        } else {
+          previewProf.style.display = 'none';
+        }
+      }
+      if (previewQuote && transcriptArea) {
+        const text = transcriptArea.value.trim();
+        previewQuote.textContent = text ? `"${text}"` : '"Your advice preview will appear here as you type or record..."';
+
+        // Update word counter
+        const chars = text.length;
+        const words = text ? text.split(/\s+/).length : 0;
+        if (charCounter) {
+          charCounter.textContent = `${chars} characters · ${words} word${words !== 1 ? 's' : ''}`;
+        }
+      }
+    }
+
+    if (courseInput) courseInput.addEventListener('input', updateLivePreview);
+    if (profInput) profInput.addEventListener('input', updateLivePreview);
+    if (transcriptArea) transcriptArea.addEventListener('input', updateLivePreview);
+  });
 </script>
 {% endblock %}

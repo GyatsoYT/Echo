@@ -40,9 +40,16 @@ def create_app() -> Flask:
     # ── Root route ──────────────────────────────────────────────────────────
     @app.route("/")
     def index():
-        from database.db import get_search_stats
+        from database.db import get_search_stats, get_recent_echoes, get_knowledge_gaps
         stats = get_search_stats()
-        return render_template("index.html", stats=stats)
+        recent_echoes = get_recent_echoes(limit=6)
+        active_gaps, _ = get_knowledge_gaps(limit=4)
+        return render_template(
+            "index.html",
+            stats=stats,
+            recent_echoes=recent_echoes,
+            active_gaps=active_gaps
+        )
 
     # ── Custom error pages ──────────────────────────────────────────────────
     @app.errorhandler(404)
