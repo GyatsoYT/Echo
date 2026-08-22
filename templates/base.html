@@ -3,25 +3,59 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="{% block description %}Echo — Institutional Memory Engine. People graduate. Knowledge shouldn't.{% endblock %}" />
-  <title>{% block title %}Echo{% endblock %} — Institutional Memory Engine</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◈</text></svg>" />
+  <meta name="description" content="{% block description %}Echo — Campus Survival Archive. People graduate. Knowledge shouldn't.{% endblock %}" />
+  <title>{% block title %}Echo{% endblock %} — Campus Survival Archive</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👻</text></svg>" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
 </head>
-<body>
+<body id="page-top">
 
   <!-- Navigation -->
   <nav class="navbar">
     <div class="container navbar-inner">
-      <a href="/" class="navbar-brand">
-        <span class="echo-icon">◈</span>
-        <span class="brand-echo">Echo</span>
+      <a href="/" class="navbar-brand" id="nav-brand">
+        <div class="brand-badge-container">
+          <div class="brand-pulse-halo"></div>
+          <div class="brand-badge">
+            <svg class="brand-svg" width="24" height="24" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="14" cy="14" r="12.5" stroke="url(#ring-grad)" stroke-width="1.2" stroke-dasharray="2.5 3" opacity="0.75" class="echo-ring-spin" />
+              <path d="M14 4.5C8.75 4.5 4.5 8.75 4.5 14V22C4.5 22.8 5.15 23.5 5.95 23.5C6.6 23.5 7.15 23.1 7.35 22.5L8.2 20C8.5 19.1 9.4 18.5 10.3 18.5C11.2 18.5 12.1 19.1 12.4 20L13.1 22.5C13.3 23.1 13.9 23.5 14.5 23.5C15.1 23.5 15.7 23.1 15.9 22.5L16.6 20C16.9 19.1 17.8 18.5 18.7 18.5C19.6 18.5 20.5 19.1 20.8 20L21.65 22.5C21.85 23.1 22.4 23.5 23.05 23.5C23.85 23.5 24.5 22.8 24.5 22V14C24.5 8.75 20.25 4.5 14 4.5Z" fill="url(#ghost-neon-grad)" filter="url(#ghost-glow)" />
+              <ellipse cx="10.5" cy="12.5" rx="1.6" ry="2" fill="#070710" />
+              <circle cx="11.1" cy="12" r="0.6" fill="#22d3ee" />
+              <ellipse cx="17.5" cy="12.5" rx="1.6" ry="2" fill="#070710" />
+              <circle cx="18.1" cy="12" r="0.6" fill="#22d3ee" />
+              <defs>
+                <filter id="ghost-glow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feDropShadow dx="0" dy="0" stdDeviation="2" flood-color="#8b5cf6" flood-opacity="0.8" />
+                </filter>
+                <linearGradient id="ghost-neon-grad" x1="4.5" y1="4.5" x2="24.5" y2="23.5" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#ffffff"/>
+                  <stop offset="0.25" stop-color="#e9d5ff"/>
+                  <stop offset="0.6" stop-color="#a855f7"/>
+                  <stop offset="1" stop-color="#06b6d4"/>
+                </linearGradient>
+                <linearGradient id="ring-grad" x1="2" y1="2" x2="26" y2="26" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#22d3ee" />
+                  <stop offset="0.5" stop-color="#a855f7" />
+                  <stop offset="1" stop-color="#ec4899" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+        </div>
+        <div class="brand-title-group">
+          <div class="brand-title-row">
+            <span class="brand-echo">ECHO</span>
+            <span class="brand-pulse-dot" title="Archive Live"></span>
+          </div>
+          <span class="brand-tagline">GHOST MENTOR</span>
+        </div>
       </a>
       <div class="navbar-links">
-        <a href="/search" class="nav-link {% if request.path == '/search' or request.path == '/results' %}active{% endif %}">Ask</a>
-        <a href="/echoes" class="nav-link {% if request.path.startswith('/echoes') %}active{% endif %}">Browse</a>
-        <a href="/gaps" class="nav-link {% if request.path == '/gaps' %}active{% endif %}">Gaps</a>
-        <a href="/record" class="nav-link nav-cta {% if request.path == '/record' %}active{% endif %}">Leave an Echo</a>
+        <a href="/search" class="nav-link {% if request.path == '/search' or request.path == '/results' %}active{% endif %}" id="nav-ask">Ask Ghosts</a>
+        <a href="/echoes" class="nav-link {% if request.path.startswith('/echoes') %}active{% endif %}" id="nav-memories">Memories</a>
+        <a href="/gaps" class="nav-link {% if request.path == '/gaps' %}active{% endif %}" id="nav-gaps">Gaps</a>
+        <a href="/record" class="nav-link nav-cta {% if request.path == '/record' %}active{% endif %}" id="nav-record">Leave an Echo</a>
       </div>
     </div>
   </nav>
@@ -48,13 +82,22 @@
   </main>
 
   <!-- Footer -->
-  <footer style="border-top: 1px solid var(--border); padding: 1.5rem 0; text-align: center; color: var(--text-muted); font-size: 0.8125rem;">
+  <footer class="site-footer">
     <div class="container">
-      <span>◈ <strong style="color: var(--purple-400)">Echo</strong> — People graduate. Knowledge shouldn't.</span>
-      &nbsp;·&nbsp;
-      <a href="/gaps" style="color: var(--text-muted);">Knowledge Gaps</a>
-      &nbsp;·&nbsp;
-      <a href="/echoes" style="color: var(--text-muted);">Browse Echoes</a>
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <span style="display:inline-flex; align-items:center; gap:0.5rem;"><span style="color:var(--purple-400);">◈</span> <strong>Echo</strong></span> — People graduate. Knowledge shouldn't.
+        </div>
+        <div class="footer-links">
+          <a href="/search" id="footer-ask">Ask the Ghosts</a>
+          <a href="/echoes" id="footer-memories">Browse Memories</a>
+          <a href="/gaps" id="footer-gaps">Knowledge Gaps</a>
+          <a href="/record" id="footer-record">Leave an Echo</a>
+        </div>
+      </div>
+      <p class="footer-tagline">
+        "What the institution remembers. What it forgets."
+      </p>
     </div>
   </footer>
 

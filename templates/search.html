@@ -1,35 +1,65 @@
 {% extends "base.html" %}
-{% block title %}Ask the Batch{% endblock %}
-{% block description %}Search across all Echoes semantically. Ask anything in plain language.{% endblock %}
+{% block title %}Ask Ghosts{% endblock %}
+{% block description %}Ask anything in plain language. Echo searches what seniors left behind — semantically, not by keyword.{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width: 720px;">
+<div class="container" style="max-width: 740px;">
 
-  <div class="page-header">
-    <h1>Ask the Batch</h1>
-    <p class="sub">Ask anything. Echo searches what seniors left behind — semantically, not by keyword.</p>
+  <!-- Mood header -->
+  <div class="search-mood">
+    <p class="search-mood-text">
+      Ask the people who <strong>already survived it.</strong>
+    </p>
+
+    <!-- Main search form -->
+    <form action="/results" method="GET" id="search-form" style="position: relative;">
+      <div class="search-box" style="max-width: 100%;">
+        <span class="search-ghost-icon">👻</span>
+        <input
+          type="text"
+          name="q"
+          id="main-search"
+          class="search-input"
+          placeholder="What do you wish you knew before taking this course?"
+          autocomplete="off"
+          autofocus
+        />
+        <button type="submit" class="search-btn" id="search-submit-btn">Ask →</button>
+      </div>
+
+      <!-- Scanning animation (shown on submit) -->
+      <div class="search-scanning" id="search-scanning">
+        <div class="scan-step" id="scan-1">
+          <span class="scan-dot"></span>
+          <span>Scanning seniors</span>
+        </div>
+        <div class="scan-step" id="scan-2">
+          <span class="scan-dot"></span>
+          <span>Matching experiences</span>
+        </div>
+        <div class="scan-step" id="scan-3">
+          <span class="scan-dot"></span>
+          <span>Finding consensus</span>
+        </div>
+        <div class="scan-step" id="scan-4">
+          <span class="scan-dot"></span>
+          <span>Checking freshness</span>
+        </div>
+      </div>
+    </form>
+
+    <!-- Echo counter -->
+    <p class="search-counter" id="search-counter">
+      Searching across <span id="echo-count-display">{{ total_echoes }}</span> Echoes
+    </p>
   </div>
 
-  <!-- Search box -->
-  <form action="/results" method="GET" id="search-form" style="margin-bottom: 3rem;">
-    <div class="search-box" style="max-width: 100%;">
-      <input
-        type="text"
-        name="q"
-        id="main-search"
-        class="search-input"
-        placeholder="e.g. does Prof. Sharma check attendance strictly?"
-        autocomplete="off"
-        autofocus
-      />
-      <button type="submit" class="search-btn">Ask →</button>
-    </div>
-  </form>
-
-  <!-- Example questions -->
-  <div style="margin-bottom: 2rem;">
-    <p class="text-muted text-sm" style="margin-bottom: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Try asking</p>
-    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+  <!-- Whisper chips — example questions -->
+  <div style="margin-bottom: 2.5rem;">
+    <p style="text-align:center; font-family: 'Space Mono', monospace; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.875rem;">
+      Seniors have answered these
+    </p>
+    <div class="whisper-chips" id="whisper-chips">
       {% for q in [
         "How does Prof. Mehta grade assignments?",
         "Is the EC202 lab reliable?",
@@ -40,27 +70,18 @@
       ] %}
       <button
         type="button"
-        class="btn btn-ghost btn-sm"
+        class="whisper-chip"
+        id="whisper-{{ loop.index }}"
         onclick="document.getElementById('main-search').value = '{{ q }}'; document.getElementById('search-form').submit();"
       >{{ q }}</button>
       {% endfor %}
     </div>
   </div>
 
-  <!-- How search works info -->
-  <div class="card-glass" style="padding: 1.25rem; border-radius: var(--radius-lg);">
-    <div style="display: flex; align-items: flex-start; gap: 0.875rem;">
-      <span style="font-size: 1.5rem; flex-shrink: 0;">◈</span>
-      <div>
-        <h4 style="margin-bottom: 0.25rem; font-size: 0.9375rem;">Semantic, not keyword search</h4>
-        <p class="text-secondary text-sm">
-          Echo understands meaning, not just words. Asking <em>"strict about deadlines?"</em>
-          will find Echoes about professors who dock marks for late submissions —
-          even if none of them use those exact words.
-        </p>
-      </div>
-    </div>
-  </div>
+  <!-- Semantic note -->
+  <p class="search-semantic-note">
+    This isn't keyword search. Echo understands meaning.
+  </p>
 
 </div>
 {% endblock %}

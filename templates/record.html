@@ -3,128 +3,219 @@
 {% block description %}Record or type your hard-earned institutional knowledge as an Echo for future students.{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width: 720px;">
+<div class="container" style="max-width: 680px;">
 
-  <div class="page-header">
-    <h1>Leave an Echo</h1>
-    <p class="sub">Your knowledge will outlive your graduation. Future juniors will thank you.</p>
+  <!-- Dramatic header -->
+  <div style="text-align: center; padding: 3rem 0 2.5rem;">
+    <span class="page-eyebrow">👻 CAMPUS SURVIVAL ARCHIVE</span>
+    <h1 style="font-size: clamp(2rem, 5vw, 3rem); margin-bottom: 0.75rem; line-height: 1.1;">
+      Leave something<br><span class="highlight">behind.</span>
+    </h1>
+    <p style="color: var(--text-secondary); font-size: 1rem; max-width: 400px; margin: 0 auto; line-height: 1.75;">
+      Future-you won't be here.<br>
+      But your experience can be.
+    </p>
   </div>
 
-  <!-- Transcript preview (shown after successful save) -->
+  <!-- Success transcript preview -->
   <div id="transcript-preview-container" class="hidden" style="margin-bottom: 1.5rem;">
     <div class="synthesis-panel">
-      <div class="synthesis-label">✓ Transcribed</div>
+      <div class="synthesis-label">✓ Echo captured — it will live longer than your graduation</div>
       <p class="synthesis-text" id="transcript-preview"></p>
     </div>
   </div>
 
   <form id="echo-form" enctype="multipart/form-data">
 
-    <!-- Recording area -->
-    <div class="card" style="margin-bottom: 1.5rem;">
-      <h3 style="margin-bottom: 1rem;">🎙 Record your voice</h3>
+    <!-- ① Category picker -->
+    <div style="margin-bottom: 1.5rem;">
+      <p style="font-family:'Space Mono',monospace; font-size:0.65rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-muted); margin-bottom:0.75rem;">
+        What are you recording?
+      </p>
+      <div class="category-picker" id="category-picker">
+        <button type="button" class="category-btn" data-value="exams" id="cat-exams">📚 Exams</button>
+        <button type="button" class="category-btn" data-value="lab" id="cat-lab">🧪 Lab</button>
+        <button type="button" class="category-btn" data-value="professor" id="cat-prof">👨‍🏫 Professor</button>
+        <button type="button" class="category-btn" data-value="campus" id="cat-campus">🏫 Campus</button>
+        <button type="button" class="category-btn" data-value="assignments" id="cat-assignments">📝 Assignments</button>
+        <button type="button" class="category-btn" data-value="grading" id="cat-grading">📊 Grading</button>
+        <button type="button" class="category-btn" data-value="placement" id="cat-placement">🚀 Placement</button>
+        <button type="button" class="category-btn" data-value="general" id="cat-general">✨ General</button>
+      </div>
+    </div>
+
+    <!-- ② Recording area -->
+    <div class="card" style="margin-bottom: 1.25rem;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.125rem;">
+        <h3 style="font-size:1rem; margin:0;">🎙 Record your voice</h3>
+        <span style="font-family:'Space Mono',monospace; font-size:0.65rem; color:var(--text-muted); letter-spacing:0.08em; text-transform:uppercase;">Audio note</span>
+      </div>
 
       <div class="recorder-area" id="recorder-area">
-        <button type="button" class="record-btn" id="record-btn" title="Start recording">🎙</button>
-        <div>
-          <p class="recording-status" id="recording-status">Click to start recording</p>
-          <p class="text-muted text-sm" id="recording-timer">00:00</p>
+        <!-- Equalizer (visible while recording) -->
+        <div class="rec-equalizer" id="rec-equalizer">
+          <div class="rec-eq-bar" style="height:8px;"></div>
+          <div class="rec-eq-bar" style="height:16px;"></div>
+          <div class="rec-eq-bar" style="height:24px;"></div>
+          <div class="rec-eq-bar" style="height:12px;"></div>
+          <div class="rec-eq-bar" style="height:20px;"></div>
         </div>
+
+        <button type="button" class="record-btn" id="record-btn" title="Start recording">🎙</button>
+
+        <div style="text-align:center;">
+          <p class="recording-status" id="recording-status">Click to record your legacy</p>
+          <p class="recording-timer-large" id="recording-timer">00:00</p>
+        </div>
+
         <audio class="audio-preview hidden" id="audio-preview" controls></audio>
       </div>
 
-      <!-- Hidden file input that gets populated by recorder.js -->
+      <!-- Hidden recorder.js target -->
       <input type="file" id="audio-file-input" name="audio" accept="audio/*" class="hidden" />
 
-      <!-- Or: upload a file -->
-      <div style="margin-top: 1rem; text-align: center; color: var(--text-muted); font-size: 0.8125rem;">
-        — or —
-      </div>
-      <div style="margin-top: 0.75rem;">
-        <label for="audio-upload" class="form-label">Upload an audio file</label>
-        <input type="file" id="audio-upload" name="audio" accept="audio/*" class="form-input" style="padding: 0.5rem;" />
+      <!-- Custom file upload -->
+      <div style="margin-top:1.125rem; position:relative;">
+        <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.75rem;">
+          <div style="flex:1; height:1px; background:var(--border);"></div>
+          <span style="font-size:0.75rem; color:var(--text-muted); font-family:'Space Mono',monospace; letter-spacing:0.06em;">OR</span>
+          <div style="flex:1; height:1px; background:var(--border);"></div>
+        </div>
+        <label class="file-upload-label" for="audio-upload" id="file-upload-label">
+          <span class="file-icon">📁</span>
+          <span class="file-text">
+            <strong id="file-name-display">Upload an audio file</strong>
+            <span>MP3, WAV, M4A, OGG — any format</span>
+          </span>
+          <span class="file-btn">Browse</span>
+        </label>
+        <input type="file" id="audio-upload" name="audio" accept="audio/*" class="hidden-file-input" />
       </div>
     </div>
 
-    <!-- Tags -->
-    <div class="card" style="margin-bottom: 1.5rem;">
-      <h3 style="margin-bottom: 1rem;">🏷 Tag your Echo</h3>
+    <!-- ③ Tags -->
+    <div class="card" style="margin-bottom:1.25rem;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.125rem;">
+        <h3 style="font-size:1rem; margin:0;">🏷 Tag your Echo</h3>
+        <span style="font-family:'Space Mono',monospace; font-size:0.65rem; color:var(--text-muted); letter-spacing:0.08em; text-transform:uppercase;">Helps search find it</span>
+      </div>
 
       <div class="form-group">
-        <label class="form-label" for="course_tag">Course Code <span style="color: var(--red)">*</span></label>
-        <input
-          type="text"
-          id="course_tag"
-          name="course_tag"
-          class="form-input"
-          placeholder="e.g. CS301, MATH101, portal, hostel"
-          required
-        />
+        <label class="form-label" for="course_tag">
+          Course Code <span style="color:var(--red); font-style:normal;">*</span>
+        </label>
+        <div class="field-wrap">
+          <span class="field-icon">◈</span>
+          <input
+            type="text"
+            id="course_tag"
+            name="course_tag"
+            class="form-input"
+            placeholder="e.g. CS301, MATH101, portal, hostel"
+            required
+            autocomplete="off"
+          />
+        </div>
       </div>
 
       <div class="form-row">
-        <div class="form-group">
-          <label class="form-label" for="professor_tag">Professor (optional)</label>
-          <input
-            type="text"
-            id="professor_tag"
-            name="professor_tag"
-            class="form-input"
-            placeholder="e.g. Prof. Mehta"
-          />
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label" for="professor_tag">Professor</label>
+          <div class="field-wrap">
+            <span class="field-icon">👨‍🏫</span>
+            <input
+              type="text"
+              id="professor_tag"
+              name="professor_tag"
+              class="form-input"
+              placeholder="e.g. Prof. Mehta"
+              autocomplete="off"
+            />
+          </div>
         </div>
-        <div class="form-group">
-          <label class="form-label" for="topic_tag">Topic (optional)</label>
-          <input
-            type="text"
-            id="topic_tag"
-            name="topic_tag"
-            class="form-input"
-            placeholder="e.g. exams, lab, grading"
-          />
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label" for="topic_tag">Topic</label>
+          <div class="field-wrap">
+            <span class="field-icon">🏷</span>
+            <input
+              type="text"
+              id="topic_tag"
+              name="topic_tag"
+              class="form-input"
+              placeholder="e.g. exams, lab, grading"
+              autocomplete="off"
+            />
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Manual transcript (initially hidden, shown as fallback) -->
-    <div class="card hidden" id="manual-transcript-area" style="margin-bottom: 1.5rem;">
-      <h3 style="margin-bottom: 0.5rem;">✍ Type your transcript</h3>
-      <p class="text-secondary text-sm" style="margin-bottom: 1rem;">
-        Transcription is unavailable right now. Type what you wanted to say instead.
-      </p>
-      <div class="form-group" style="margin-bottom: 0;">
-        <textarea
-          id="manual_transcript"
-          name="manual_transcript"
-          class="form-textarea"
-          rows="5"
-          placeholder="What do you wish you knew as a junior student about this course, professor, or topic?"
-        ></textarea>
+    <!-- ④ Manual transcript (hidden by default) -->
+    <div class="hidden" id="manual-transcript-area" style="margin-bottom:1.25rem;">
+      <div class="card">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
+          <h3 style="font-size:1rem; margin:0;">✍ Type your transcript</h3>
+          <button
+            type="button"
+            style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:0.8rem;font-family:'Space Mono',monospace;letter-spacing:0.04em;"
+            onclick="document.getElementById('manual-transcript-area').classList.add('hidden'); document.getElementById('toggle-manual-btn').textContent = '✍ Type instead of recording';"
+          >✕ Close</button>
+        </div>
+        <p style="color:var(--text-secondary); font-size:0.875rem; margin-bottom:1rem; line-height:1.6;">
+          Transcription is unavailable right now. Type what you wanted to say instead.
+        </p>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label" for="manual_transcript">Your knowledge</label>
+          <textarea
+            id="manual_transcript"
+            name="manual_transcript"
+            class="form-textarea"
+            rows="5"
+            placeholder="What do you wish you knew as a junior student about this course, professor, or topic?"
+          ></textarea>
+        </div>
       </div>
     </div>
 
-    <!-- Or show manual transcript option -->
-    <div style="margin-bottom: 1.5rem; text-align: center;">
-      <button type="button" class="btn btn-ghost btn-sm" onclick="
-        const area = document.getElementById('manual-transcript-area');
-        area.classList.toggle('hidden');
-        this.textContent = area.classList.contains('hidden') ? '✍ Type instead of recording' : '✍ Hide text input';
-      ">✍ Type instead of recording</button>
+    <!-- Toggle type -->
+    <div style="margin-bottom:1.5rem; text-align:center;">
+      <button
+        type="button"
+        class="btn btn-ghost btn-sm"
+        id="toggle-manual-btn"
+        onclick="
+          const area = document.getElementById('manual-transcript-area');
+          area.classList.toggle('hidden');
+          this.textContent = area.classList.contains('hidden') ? '✍ Type instead of recording' : '✍ Hide text input';
+        "
+      >✍ Type instead of recording</button>
     </div>
 
-    <button type="submit" class="btn btn-primary btn-full btn-lg" id="submit-btn">
-      📡 Save Echo
+    <!-- Submit -->
+    <button type="submit" class="btn btn-primary btn-full btn-lg" id="submit-btn" style="font-size:1.0625rem; letter-spacing:0.02em;">
+      👻 Leave Your Echo
     </button>
+
   </form>
 
   <!-- Tips -->
-  <div style="margin-top: 2rem; padding: 1.25rem; background: var(--bg-glass); border-radius: var(--radius-lg); border: 1px solid var(--border);">
-    <h4 style="margin-bottom: 0.75rem; color: var(--text-secondary); font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em;">💡 Tips for a great Echo</h4>
-    <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.375rem;">
-      <li class="text-sm text-secondary">• Be specific — "grading" is okay, "he deducts 5% per missing comment" is better</li>
-      <li class="text-sm text-secondary">• Mention the course code so juniors find it in the right context</li>
-      <li class="text-sm text-secondary">• If your Echo covers the same ground as an existing one, it'll be merged and confirmed</li>
-      <li class="text-sm text-secondary">• Keep it under 2 minutes — focused Echoes work better for search</li>
+  <div style="margin-top:1.75rem; padding:1.25rem 1.375rem; background:rgba(124,58,237,0.05); border-radius:var(--radius-lg); border:1px solid rgba(124,58,237,0.12);">
+    <p style="font-family:'Space Mono',monospace; font-size:0.65rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-muted); margin-bottom:0.875rem;">
+      💡 Tips for a great Echo
+    </p>
+    <ul style="list-style:none; display:flex; flex-direction:column; gap:0.5rem;">
+      <li style="color:var(--text-secondary); font-size:0.875rem; display:flex; gap:0.5rem; line-height:1.5;">
+        <span style="color:var(--purple-400); flex-shrink:0;">→</span>
+        Be specific — "grading" is okay, "he deducts 5% per missing comment" is better
+      </li>
+      <li style="color:var(--text-secondary); font-size:0.875rem; display:flex; gap:0.5rem; line-height:1.5;">
+        <span style="color:var(--purple-400); flex-shrink:0;">→</span>
+        Mention the course code so juniors find it in the right context
+      </li>
+      <li style="color:var(--text-secondary); font-size:0.875rem; display:flex; gap:0.5rem; line-height:1.5;">
+        <span style="color:var(--purple-400); flex-shrink:0;">→</span>
+        Keep it under 2 minutes — focused Echoes work better for search
+      </li>
     </ul>
   </div>
 
@@ -135,16 +226,29 @@
 <script src="{{ url_for('static', filename='js/recorder.js') }}"></script>
 <script>
   EchoRecorder.init({
-    recordBtnId:     'record-btn',
-    statusId:        'recording-status',
-    previewId:       'audio-preview',
-    timerId:         'recording-timer',
-    uploadInputId:   'audio-file-input',
+    recordBtnId:    'record-btn',
+    statusId:       'recording-status',
+    previewId:      'audio-preview',
+    timerId:        'recording-timer',
+    uploadInputId:  'audio-file-input',
   });
 
-  // When user uploads a file manually, clear the recorded blob slot
-  document.getElementById('audio-upload').addEventListener('change', function () {
-    document.getElementById('audio-file-input').value = '';
-  });
+  // Custom file input label update
+  const fileInput = document.getElementById('audio-upload');
+  const fileNameDisplay = document.getElementById('file-name-display');
+  if (fileInput) {
+    fileInput.addEventListener('change', function () {
+      const name = this.files[0] ? this.files[0].name : 'Upload an audio file';
+      fileNameDisplay.textContent = name;
+      // Clear recorded blob
+      document.getElementById('audio-file-input').value = '';
+    });
+  }
+
+  // Make the custom label open file dialog
+  const uploadLabel = document.getElementById('file-upload-label');
+  if (uploadLabel) {
+    uploadLabel.addEventListener('click', () => fileInput.click());
+  }
 </script>
 {% endblock %}

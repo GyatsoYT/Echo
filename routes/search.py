@@ -12,6 +12,7 @@ from flask import Blueprint, request, jsonify, render_template
 from services.search import semantic_search
 from services.synthesis import ask_the_batch
 from services.memory_health import enrich_echoes_with_health
+from database.db import get_search_stats
 from config import Config
 
 search_bp = Blueprint("search", __name__)
@@ -21,7 +22,8 @@ search_bp = Blueprint("search", __name__)
 
 @search_bp.route("/search", methods=["GET"])
 def search_page():
-    return render_template("search.html")
+    stats = get_search_stats()
+    return render_template("search.html", total_echoes=stats.get("total_echoes", 0))
 
 
 # ── Run search (POST — JSON API) ────────────────────────────────────────────
