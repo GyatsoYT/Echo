@@ -13,7 +13,7 @@ import os
 import io
 import json
 from flask import Blueprint, render_template, jsonify, send_file, current_app, request, flash, redirect, url_for
-from database.db import get_knowledge_gaps, get_search_stats, get_all_echoes, insert_echo
+from database.db import get_knowledge_gaps, get_search_stats, get_all_echoes, insert_echo, get_db
 from services.embeddings import embed_text
 from services.memory_health import enrich_echoes_with_health
 
@@ -58,119 +58,125 @@ def generate_qr(echo_id):
         )
         qr.add_data(echo_url)
         qr.make(fit=True)
-        img = qr.make_image(fill_color="#7C3AED", back_color="white")
+        img = qr.make_image(fill_color="#E05A3A", back_color="#1F2127")
 
         buf = io.BytesIO()
         img.save(buf, format="PNG")
         buf.seek(0)
 
         return send_file(buf, mimetype="image/png",
-                         download_name=f"echo_{echo_id}_qr.png")
+                         download_name=f"sst_echo_{echo_id}_qr.png")
     except ImportError:
         return jsonify({"error": "qrcode package not installed. Run: pip install qrcode[pil]"}), 500
 
 
-# ── Seed demo data ──────────────────────────────────────────────────────────
+# ── Seed demo data (SST Real-World Knowledge) ───────────────────────────────
 
 SEED_DATA = [
     {
-        "course_tag": "CS301",
-        "professor_tag": "Prof. Mehta",
-        "topic_tag": "exams",
-        "transcript": "Prof. Mehta recycles past paper questions almost verbatim. Get the last 5 years of question papers from the library database — they don't advertise it but it's free to access with your student ID. Focus on dynamic programming and graph traversal, those are his favourite topics."
+        "course_tag": "CS & AI",
+        "professor_tag": "Anshuman Singh & Team",
+        "topic_tag": "DSA & Algorithms",
+        "transcript": "For Year 1 CS & AI, don't rush through syntax. Anshuman's problem sets prioritize time complexity optimization and algorithmic problem solving from day one. Master Java fundamentals and tree traversals before the first internal benchmark."
     },
     {
-        "course_tag": "CS301",
-        "professor_tag": "Prof. Mehta",
-        "topic_tag": "grading",
-        "transcript": "Mehta's grading is actually quite fair but he's strict on code style. He deducts marks for missing comments and inconsistent indentation. Write your variable names like you're writing documentation — be verbose, he respects it."
+        "course_tag": "Dual Degree",
+        "professor_tag": "IIT Madras BS Pathway",
+        "topic_tag": "Exams & Deadlines",
+        "transcript": "Balancing SST project sprints with IIT Madras BS Data Science: IITM weekly graded assignments are due every Wednesday night. Finish them on Tuesday so you don't get trapped when SST 48-hour hackathon sprints kick off on Thursday."
     },
     {
-        "course_tag": "EC202",
-        "professor_tag": "Prof. Sharma",
-        "topic_tag": "attendance",
-        "transcript": "Sharma marks attendance at the START of class, not the end. A lot of people miss this and lose attendance marks even if they come 5 minutes late. Set your alarm early. Also he doesn't take proxy — he knows everyone by face by week 3."
+        "course_tag": "Dual Degree",
+        "professor_tag": "BITS Pilani BSc Route",
+        "topic_tag": "Midterm Schedule",
+        "transcript": "For the BITS Pilani BSc Hons CS pathway: BITS proctored exams happen twice a semester. File your attendance exemption on SST Dashboard with your Batch Success Manager (BSM) at least 10 days in advance to get PDC credit waivers."
     },
     {
-        "course_tag": "EC202",
-        "professor_tag": "Prof. Sharma",
-        "topic_tag": "lab",
-        "transcript": "The EC202 lab computers crash if you run simulations above 10,000 samples. Save your work every 15 minutes. The lab assistant told me the university IT hasn't updated the RAM in 3 years. Use your own laptop with the USB boot image if possible."
+        "course_tag": "Innovation Lab",
+        "professor_tag": "SIL Mentors & Shark Tank",
+        "topic_tag": "Hardware & AI Wearables",
+        "transcript": "Scaler Innovation Lab (SIL) supports deep-tech startups like NeoSapiens (AI wearable pendant funded on Shark Tank India) and Percevia (AI glasses). If you need 3D printing or GPU clusters, submit your hardware bill of materials to SIL mentors on Monday mornings."
     },
     {
-        "course_tag": "MATH101",
-        "professor_tag": "Prof. Joshi",
-        "topic_tag": "exams",
-        "transcript": "Joshi's midterm is not from the textbook. She writes completely original problems. The only way to prepare is to do every assignment problem because she reuses her own assignment formats in exams. Don't bother memorising theorems without understanding proofs."
+        "course_tag": "Academic Integrity",
+        "professor_tag": "Evaluation Committee",
+        "topic_tag": "Plagiarism & Code Checkers",
+        "transcript": "SST uses automated AST-level code similarity checkers across all DSA and web development assignments. Do NOT share your GitHub repos or copy logic from batchmates — during the 61-student plagiarism incident, all caught submissions were assigned zero with CGR penalties. Write original implementations."
     },
     {
-        "course_tag": "MATH101",
-        "professor_tag": "Prof. Joshi",
-        "topic_tag": "office hours",
-        "transcript": "Joshi's office hours are genuinely the most useful resource in the course. She'll basically solve any doubt if you show up having attempted the problem yourself. Go on Tuesdays — Fridays she's in faculty meetings and cuts it short."
+        "course_tag": "AI & Business",
+        "professor_tag": "Vidit Jain & SIL",
+        "topic_tag": "Startup Incubation",
+        "transcript": "In the AI & Business track, your 6-month startup incubation is evaluated on actual customer discovery, first-principles product thinking, and MRR. When pitching for the ₹2 Crore seed fund, show working user metrics and revenue over theoretical slides."
     },
     {
-        "course_tag": "PHY103",
-        "professor_tag": "Prof. Kulkarni",
-        "topic_tag": "practicals",
-        "transcript": "The PHY103 practical viva is worth 30% and most people under-prepare for it. Kulkarni asks you to explain the theory of every single experiment, not just how to operate the equipment. Prepare a one-page theory summary for each practical in advance."
+        "course_tag": "Internships",
+        "professor_tag": "Industry Immersion",
+        "topic_tag": "Singapore & Global Roles",
+        "transcript": "International internships (like Singapore ₹2L/month in Scala/Backend and Apple Academy Bali): Companies look for deep backend mastery and open-source contributions. Kanan Arora and Sourashis Sarkar proved that building full-stack production systems beats simple class projects."
     },
     {
-        "course_tag": "portal",
-        "professor_tag": "",
-        "topic_tag": "registration",
-        "transcript": "The student portal almost always crashes during exam registration week — especially on the last day. Register on day 1 of the window opening. I tried to change my elective on deadline day last semester and the portal was down for 6 hours straight."
+        "course_tag": "Open Source",
+        "professor_tag": "Competitive Coding Club",
+        "topic_tag": "GSoC & ICPC",
+        "transcript": "SST had 14 students selected for GSoC 2026. Start reaching out to open-source maintainers by November. Seniors in the Competitive Coding and Open Source clubs do peer proposal reviews in the hostel common room every weekend."
     },
     {
-        "course_tag": "portal",
-        "professor_tag": "",
-        "topic_tag": "grades",
-        "transcript": "Grade submission by professors happens late — usually 2 to 3 weeks after the deadline. Don't panic if your grades don't show up in the portal right after results day. The portal shows a dash, not zero, for pending grades. Zero means something actually went wrong."
+        "course_tag": "SST Dashboard",
+        "professor_tag": "Academic Office",
+        "topic_tag": "CGR & Attendance",
+        "transcript": "Keep a close eye on your CGR trends and PDC credits on sst-dashboard.com. If you represent SST at an external hackathon (like Smart India Hackathon or Meta PyTorch OpenEnv), submit your proof within 48 hours for immediate session-level attendance exemption."
     },
     {
-        "course_tag": "CS401",
-        "professor_tag": "Prof. Rathore",
-        "topic_tag": "project",
-        "transcript": "For the CS401 capstone project, Rathore cares way more about the problem framing and impact than the technical complexity. A simple ML model with a well-defined real-world problem beats a complicated system with a vague use case. Lead with 'why this matters' in your presentation."
+        "course_tag": "Campus Life",
+        "professor_tag": "404 Media & Council",
+        "topic_tag": "Odyssey & Rise Up",
+        "transcript": "Balance your intense coding sprints with campus community life. Events like Rise Up freshers, 404 Media Club podcast productions, and writing for Odyssey magazine are where you build lifelong founder networks with your batchmates."
     },
     {
-        "course_tag": "CS401",
-        "professor_tag": "Prof. Rathore",
-        "topic_tag": "plagiarism",
-        "transcript": "Rathore runs all code through a plagiarism checker that checks against GitHub repos too. Don't copy from public repositories. You can use open source libraries but you cannot copy core project logic. One team got zero in 2023 for this."
+        "course_tag": "Math & ML",
+        "professor_tag": "Shivank Agrawal",
+        "topic_tag": "Linear Algebra & Micro MBA",
+        "transcript": "First year is intense with DSA + Web Dev + Linear Algebra + Micro MBA running concurrently. Don't fall behind in linear algebra matrix decompositions — it is the core foundation for machine learning backpropagation and attention mechanisms in Year 2."
     },
     {
-        "course_tag": "hostel",
-        "professor_tag": "",
-        "topic_tag": "wifi",
-        "transcript": "Hostel wifi is strongest on floors 2 and 3 of Block B — avoid Block A if you need to do anything API-heavy or video calls. The router in Block A hasn't been replaced in years. Also wifi drops every night between 1am and 1:30am for maintenance."
-    },
-    {
-        "course_tag": "library",
-        "professor_tag": "",
-        "topic_tag": "resources",
-        "transcript": "The library has free access to IEEE Xplore and ACM Digital Library through the institutional login. Most juniors don't know the credentials are on the library website under 'E-Resources'. You need to be on campus wifi or use the VPN client they provide."
-    },
-    {
-        "course_tag": "CS301",
-        "professor_tag": "Prof. Mehta",
-        "topic_tag": "assignments",
-        "transcript": "Mehta gives extensions if you email him before the deadline, not after. He's very responsive on email — usually replies within 2 hours. Never ask for extension after you've already missed it, he'll say no every time. Subject line should be professional."
-    },
-    {
-        "course_tag": "internship",
-        "professor_tag": "",
-        "topic_tag": "placement",
-        "transcript": "Placement season starts in August for December grad. The TPO portal opens for profile submission in July — fill it out the day it opens, the shortlisting algorithm considers profile completeness as a factor. Also get your CGPA certified by the academic section before July, companies ask for it instantly."
-    },
+        "course_tag": "Placements",
+        "professor_tag": "Industry Super Mentors",
+        "topic_tag": "MAANG & AI Roles",
+        "transcript": "55%+ of SST early placement offers are AI-specific roles with ₹21 LPA average CTC. Practice explaining both low-level algorithmic proofs and transformer attention mechanisms in the 1:1 Super Mentor mock interview rounds."
+    }
 ]
 
 
 @admin_bp.route("/seed", methods=["POST"])
 def seed_data():
-    """Seed the database with demo Echoes. Dev/demo use only."""
+    """Seed the database with authentic SST demo Echoes. Dev/demo use only."""
     inserted = 0
     skipped = 0
+
+    # Clear old generic echoes and searches if requested or re-seed cleanly
+    with get_db() as conn:
+        conn.execute("DELETE FROM echoes")
+        conn.execute("DELETE FROM searches")
+
+    # Add realistic initial searches so Gaps Radar is pre-populated with SST student queries
+    INITIAL_SEARCHES = [
+        ("How to balance IIT Madras BS assignments with SST project sprints?", 0.94),
+        ("GPU cluster access and PyTorch setup in SIL Innovation Lab", 0.90),
+        ("How strict are code plagiarism checkers at SST?", 0.92),
+        ("How did 14 SST students get selected for GSoC 2026?", 0.91),
+        ("Best strategy for 2 Crore seed funding in AI and Business track", 0.88),
+        ("How to get selected for Apple Academy in Bali as an SST student?", 0.89),
+        ("How to prepare for Smart India Hackathon with Team AntarDrishti?", 0.85),
+        ("Can we get proxy attendance from Batch Success Managers for hackathons?", 0.0),  # Active Gap!
+        ("How to connect external microcontrollers to hostel LAN?", 0.0),                  # Active Gap!
+        ("Which electives in IIT Madras BS have the lowest grading curves?", 0.0),         # Active Gap!
+        ("How does the 404 Media Club select camera crew and podcast hosts?", 0.0),        # Active Gap!
+    ]
+
+    with get_db() as conn:
+        for q, score in INITIAL_SEARCHES:
+            conn.execute("INSERT INTO searches (query_text, best_match_score) VALUES (?, ?)", (q, score if score > 0 else None))
 
     for item in SEED_DATA:
         try:
@@ -193,5 +199,5 @@ def seed_data():
         "status": "done",
         "inserted": inserted,
         "skipped": skipped,
-        "message": f"Seeded {inserted} Echoes ({skipped} skipped due to errors)."
+        "message": f"Successfully loaded {inserted} authentic Scaler School of Technology (SST) campus memories and knowledge gaps."
     }), 200

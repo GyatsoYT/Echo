@@ -1,254 +1,292 @@
 {% extends "base.html" %}
-{% block title %}Home{% endblock %}
-{% block description %}Echo is an institutional memory engine that preserves the practical knowledge seniors leave behind. People graduate. Knowledge shouldn't.{% endblock %}
+{% block title %}ECHO — SST Institutional Memory Bank{% endblock %}
+{% block description %}ECHO is the campus knowledge base for Scaler School of Technology. Preserved advice on CS & AI, IIT Madras/BITS dual degrees, SIL labs, and 1-Year Industry Immersion.{% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container app-workspace">
 
-  <!-- ═══ Hero ═══════════════════════════════════════════════════════════ -->
-  <section class="hero">
+  <!-- ═══ Hero Section (Interactive, Animated & Functional) ═══════════════ -->
+  <section class="hero-fancy reveal-on-scroll">
     <div class="hero-eyebrow">
-      <span class="eyebrow-ghost">👻</span>
-      <span class="eyebrow-title">CAMPUS SURVIVAL ARCHIVE</span>
-      <span class="eyebrow-pill">WHAT SENIORS LEFT BEHIND</span>
+      <span class="eyebrow-signal-dot"></span>
+      <span class="eyebrow-title">SST CAMPUS SURVIVAL VAULT</span>
+      <span class="eyebrow-pill">BANGALORE RESIDENTIAL</span>
     </div>
 
     <h1 class="hero-title">
-      The people who left<br>
-      <span class="highlight">didn't take everything</span><br>
-      <span class="hero-title-line2">with them.</span>
+      Every batch leaves.<br>
+      <span class="hero-live-shimmer">Make sure their knowledge</span><br>
+      <span class="hero-subtext-line">didn't take everything with them.</span>
     </h1>
 
-    <div class="hero-stagger" aria-hidden="true">
-      <span class="hero-stagger-item">Their shortcuts</span>
-      <span class="hero-stagger-item">Their mistakes</span>
-      <span class="hero-stagger-item">Their survival knowledge</span>
-    </div>
-
     <p class="hero-sub">
-      Ask what seniors wish they'd known. Echo finds it in their recordings —
-      semantically, not by keyword.
+      The unwritten survival manual for Scaler School of Technology. Real insights on CS & AI sprints, IIT Madras/BITS dual degrees, Shark Tank & SIL startups, GSoC, Apple Academy Bali, and Singapore internships from seniors who lived it.
     </p>
 
-    <div class="hero-cta">
-      <a href="/search" class="btn btn-primary btn-lg" id="hero-cta-ask">
-        Ask the Ghosts →
-      </a>
-      <a href="/record" class="btn btn-secondary btn-lg" id="hero-cta-record">
-        🎙 Leave an Echo
-      </a>
-    </div>
+    <!-- Large, Spacious Search Box -->
+    <form action="/results" method="GET" class="hero-search-form" id="search-form">
+      <div class="hero-search-wrap">
+        <div class="search-icon-slot">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="search-svg-icon">
+            <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2.2"/>
+            <path d="M20 20L16 16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <input
+          type="text"
+          name="q"
+          class="hero-search-input"
+          placeholder="Ask anything (e.g. IIT Madras BS balance, NeoSapiens Shark Tank, Apple Academy Bali, SIL GPU cluster, GSoC prep)"
+          autocomplete="off"
+          autofocus
+          required
+          id="home-search-input"
+        />
+        <button type="submit" class="btn btn-primary hero-search-btn" id="home-search-btn">
+          <span>Search Echoes</span>
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+            <path d="M6 3L11 8L6 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </form>
 
-    <p class="hero-chips-label">What are you trying to survive?</p>
-    <div class="hero-chips">
-      <a href="/results?q=exam+tips+and+preparation" class="hero-chip" id="chip-exams">📚 Exams</a>
-      <a href="/results?q=lab+experience+and+tips" class="hero-chip" id="chip-labs">🧪 Labs</a>
-      <a href="/results?q=professor+grading+and+attendance" class="hero-chip" id="chip-profs">👨‍🏫 Professors</a>
-      <a href="/results?q=hostel+and+campus+life" class="hero-chip" id="chip-campus">🏫 Campus</a>
-      <a href="/results?q=assignments+and+deadlines" class="hero-chip" id="chip-assignments">💀 Assignments</a>
-      <a href="/results?q=internship+and+placement" class="hero-chip" id="chip-internship">🚀 Placement</a>
+    <!-- Quick SST topic chips -->
+    <div class="hero-category-chips">
+      <span class="chips-label">Explore SST Knowledge:</span>
+      <div class="chips-list">
+        <a href="/results?q=how+to+balance+IIT+Madras+BS+degree+with+SST" class="category-chip" id="chip-iitm">IIT Madras BS</a>
+        <a href="/results?q=NeoSapiens+Shark+Tank+and+SIL+Innovation+Lab+startups" class="category-chip" id="chip-sharktank">NeoSapiens & Shark Tank</a>
+        <a href="/results?q=Apple+Academy+Bali+selection+in+second+year" class="category-chip" id="chip-apple">Apple Academy Bali</a>
+        <a href="/results?q=GSoC+and+ICPC+preparation+from+first+year" class="category-chip" id="chip-gsoc">GSoC & ICPC</a>
+        <a href="/results?q=Singapore+backend+internships+with+2+lakh+stipend" class="category-chip" id="chip-singapore">Singapore Internships</a>
+        <a href="/results?q=Smart+India+Hackathon+and+Meta+PyTorch+hackathons" class="category-chip" id="chip-sih">SIH & PyTorch Finals</a>
+        <a href="/results?q=Odyssey+newsletter+academic+stress+and+DSA+balance" class="category-chip" id="chip-odyssey">Odyssey & DSA Stress</a>
+        <a href="/results?q=Rise+Up+freshers+fest+and+Bangalore+campus+life" class="category-chip" id="chip-riseup">Rise Up Fest</a>
+      </div>
     </div>
   </section>
 
-  <!-- ═══ Stats bar ═══════════════════════════════════════════════════════ -->
-  <div class="stats-bar">
-    <div class="stat-item">
-      <div class="stat-value" data-count="{{ stats.total_echoes }}">{{ stats.total_echoes }}</div>
-      <div class="stat-label">Echoes stored</div>
+  <!-- ═══ Live Stats Strip (Scroll Animated) ═════════════════════════════ -->
+  <div class="stats-ribbon reveal-on-scroll">
+    <div class="stat-card">
+      <div class="stat-num" data-count="{{ stats.total_echoes }}">{{ stats.total_echoes }}</div>
+      <div class="stat-label">SST Echoes Preserved</div>
     </div>
-    <div class="stat-item">
-      <div class="stat-value" data-count="{{ stats.total_searches }}">{{ stats.total_searches }}</div>
-      <div class="stat-label">Questions asked</div>
+    <div class="stat-card">
+      <div class="stat-num" data-count="{{ stats.total_searches }}">{{ stats.total_searches }}</div>
+      <div class="stat-label">Queries Answered</div>
     </div>
-    <div class="stat-item">
-      <div class="stat-value" data-count="{{ stats.gap_count }}">{{ stats.gap_count }}</div>
-      <div class="stat-label">Knowledge gaps</div>
+    <div class="stat-card stat-card-alert">
+      <div class="stat-num text-red" data-count="{{ stats.gap_count }}">{{ stats.gap_count }}</div>
+      <div class="stat-label text-red">Active Blind Spots</div>
     </div>
   </div>
 
-  <!-- ═══ How it works ════════════════════════════════════════════════════ -->
-  <section style="padding: 1rem 0 3rem;">
-    <h2 style="text-align:center; margin-bottom: 0.5rem;">How Echo works</h2>
-    <p style="text-align:center; color: var(--text-secondary); max-width: 520px; margin: 0 auto 2.5rem; font-size: 0.9375rem;">
-      Three steps. Your institution's memory — captured, preserved, searchable.
-    </p>
-
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem;">
-
-      <div class="step-card" id="step-1">
-        <div class="step-num">01</div>
-        <span class="step-icon">🎙</span>
-        <h3 style="margin-bottom: 0.5rem;">Leave an Echo</h3>
-        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.65;">
-          Record a voice note or type what you wish you knew as a junior.
-          Tag it by course, professor, or topic.
-        </p>
-      </div>
-
-      <div class="step-card" id="step-2">
-        <div class="step-num">02</div>
-        <span class="step-icon">◈</span>
-        <h3 style="margin-bottom: 0.5rem;">Echo processes it</h3>
-        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.65;">
-          Whisper transcribes the audio. Gemini embeds the meaning semantically.
-          Memory Health is computed. Stored forever.
-        </p>
-      </div>
-
-      <div class="step-card" id="step-3">
-        <div class="step-num">03</div>
-        <span class="step-icon">👻</span>
-        <h3 style="margin-bottom: 0.5rem;">Ask the Ghosts</h3>
-        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.65;">
-          Ask anything in plain language. Echo finds the relevant memories and
-          synthesises what seniors collectively knew.
-        </p>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- ═══ Quick search ════════════════════════════════════════════════════ -->
-  <section style="padding: 1rem 0 3rem; text-align: center;">
-    <h2 style="margin-bottom: 0.5rem;">Try asking something</h2>
-    <p style="color: var(--text-secondary); margin-bottom: 1.75rem; font-size: 0.9375rem;">Type a question a junior student might have.</p>
-    <form action="/results" method="GET" class="search-box" id="search-form">
-      <span class="search-ghost-icon">👻</span>
-      <input
-        type="text"
-        name="q"
-        class="search-input"
-        placeholder="e.g. how does Prof. Mehta grade assignments?"
-        autocomplete="off"
-        id="home-search-input"
-      />
-      <button type="submit" class="search-btn" id="home-search-btn">Ask →</button>
-    </form>
-  </section>
-
-  <!-- ═══ Questions Students Are Asking ══════════════════════════════════ -->
-  <section style="padding: 0 0 3.5rem;">
-
-    <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:1.5rem; flex-wrap:wrap; gap:0.5rem;">
+  <!-- ═══ The Unwritten Syllabus (SST Popular Questions Grid) ════════════ -->
+  <section class="syllabus-section reveal-on-scroll">
+    <div class="syllabus-header-row">
       <div>
-        <span style="font-family:'Space Mono',monospace; font-size:0.65rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--purple-400); display:block; margin-bottom:0.375rem;">👻 The Unwritten Syllabus</span>
-        <h2 style="margin:0; font-size:clamp(1.375rem, 3vw, 1.875rem);">What nobody tells you until it's too late.</h2>
+        <span class="syllabus-eyebrow">THE UNWRITTEN SST SYLLABUS</span>
+        <h2 class="syllabus-heading">What nobody tells you until it's too late.</h2>
       </div>
-      <a href="/search" class="btn btn-ghost btn-sm" id="popular-see-all" style="flex-shrink:0;">Ask your own →</a>
+      <a href="/search" class="btn btn-ghost btn-sm" id="popular-see-all">Ask your own &rarr;</a>
     </div>
 
     <div class="popular-questions-grid" id="popular-questions-grid">
 
-      <a href="/results?q=how+does+professor+grade+assignments+and+what+does+he+look+for" class="pq-card" id="pq-1">
+      <a href="/results?q=how+to+balance+IIT+Madras+BS+degree+with+SST+project+sprints" class="pq-card" id="pq-1">
         <div class="pq-top">
-          <span class="pq-tag pq-tag-prof">👨‍🏫 Professor</span>
-          <span class="pq-arrow">→</span>
+          <span class="pq-tag pq-tag-prof">Dual Degree</span>
+          <span class="pq-arrow">&rarr;</span>
         </div>
-        <p class="pq-question">"How do professors actually grade assignments — and what do they secretly look for?"</p>
-        <span class="pq-hint">Seniors know the formula</span>
+        <p class="pq-question">"How do you balance intense SST 48-hour project sprints with IIT Madras BS weekly Wednesday deadlines?"</p>
+        <span class="pq-hint">Weekly schedule formula</span>
       </a>
 
-      <a href="/results?q=is+the+lab+equipment+reliable+and+what+to+watch+out+for" class="pq-card" id="pq-2">
+      <a href="/results?q=NeoSapiens+Shark+Tank+India+and+SIL+Innovation+Lab+startups" class="pq-card" id="pq-2">
         <div class="pq-top">
-          <span class="pq-tag pq-tag-lab">🧪 Lab</span>
-          <span class="pq-arrow">→</span>
+          <span class="pq-tag pq-tag-lab">Shark Tank & SIL</span>
+          <span class="pq-arrow">&rarr;</span>
         </div>
-        <p class="pq-question">"Is the lab equipment actually reliable, or are there things that always break?"</p>
-        <span class="pq-hint">2 seniors warned about this</span>
+        <p class="pq-question">"How did NeoSapiens incubate an AI-native pendant at SIL and secure funding on Shark Tank India?"</p>
+        <span class="pq-hint">SIL incubation story</span>
       </a>
 
-      <a href="/results?q=when+does+student+portal+crash+registration+tips" class="pq-card" id="pq-3">
+      <a href="/results?q=Apple+Academy+Bali+selection+in+second+year+tips" class="pq-card" id="pq-3">
         <div class="pq-top">
-          <span class="pq-tag pq-tag-campus">🏫 Campus</span>
-          <span class="pq-arrow">→</span>
+          <span class="pq-tag pq-tag-campus">Apple Academy</span>
+          <span class="pq-arrow">&rarr;</span>
         </div>
-        <p class="pq-question">"When does the student portal crash and how do you register before it goes down?"</p>
-        <span class="pq-hint">Critical timing info inside</span>
+        <p class="pq-question">"How did Year 2 students crack selection for the prestigious Apple Academy in Bali?"</p>
+        <span class="pq-hint">Global program roadmap</span>
       </a>
 
-      <a href="/results?q=how+to+prepare+for+exams+what+actually+comes+in+the+paper" class="pq-card" id="pq-4">
+      <a href="/results?q=Singapore+backend+internships+with+2+lakh+stipend+prep" class="pq-card" id="pq-4">
         <div class="pq-top">
-          <span class="pq-tag pq-tag-exam">📚 Exams</span>
-          <span class="pq-arrow">→</span>
+          <span class="pq-tag pq-tag-exam">Singapore Internships</span>
+          <span class="pq-arrow">&rarr;</span>
         </div>
-        <p class="pq-question">"What actually comes in the exam — and how do seniors study differently than juniors?"</p>
-        <span class="pq-hint">Past paper patterns revealed</span>
+        <p class="pq-question">"How did seniors secure international backend engineering internships in Singapore with ₹2L/mo stipend?"</p>
+        <span class="pq-hint">Kanan Arora interview breakdown</span>
       </a>
 
-      <a href="/results?q=how+strict+is+attendance+and+what+happens+if+you+miss+class" class="pq-card" id="pq-5">
+      <a href="/results?q=GSoC+2026+and+ICPC+preparation+from+first+year+at+SST" class="pq-card" id="pq-5">
         <div class="pq-top">
-          <span class="pq-tag pq-tag-prof">👨‍🏫 Attendance</span>
-          <span class="pq-arrow">→</span>
+          <span class="pq-tag pq-tag-campus">Open Source</span>
+          <span class="pq-arrow">&rarr;</span>
         </div>
-        <p class="pq-question">"How strict is attendance, really? And what happens when you miss too many?"</p>
-        <span class="pq-hint">Seniors found out the hard way</span>
+        <p class="pq-question">"How did 14 SST students get selected for GSoC 2026 as undergraduate juniors?"</p>
+        <span class="pq-hint">14 GSoC selections playbook</span>
       </a>
 
-      <a href="/results?q=hostel+wifi+which+block+best+internet+connection" class="pq-card" id="pq-6">
+      <a href="/results?q=Smart+India+Hackathon+and+Meta+PyTorch+hackathon+finals" class="pq-card" id="pq-6">
         <div class="pq-top">
-          <span class="pq-tag pq-tag-campus">🏫 Hostel</span>
-          <span class="pq-arrow">→</span>
+          <span class="pq-tag pq-tag-prof">Hackathons</span>
+          <span class="pq-arrow">&rarr;</span>
         </div>
-        <p class="pq-question">"Which hostel block has the best wifi — and when does it actually die on you?"</p>
-        <span class="pq-hint">Location matters more than you think</span>
+        <p class="pq-question">"How did Team AntarDrishti win SIH and other teams reach the Meta × PyTorch hackathon finals?"</p>
+        <span class="pq-hint">Hackathon team blueprints</span>
       </a>
 
-      <a href="/results?q=how+to+get+extension+on+assignment+deadline+from+professor" class="pq-card" id="pq-7">
+      <a href="/results?q=Odyssey+newsletter+academic+stress+DSA+and+code+plagiarism+rules" class="pq-card" id="pq-7">
         <div class="pq-top">
-          <span class="pq-tag pq-tag-exam">📝 Deadlines</span>
-          <span class="pq-arrow">→</span>
+          <span class="pq-tag pq-tag-exam">Odyssey Insights</span>
+          <span class="pq-arrow">&rarr;</span>
         </div>
-        <p class="pq-question">"Can you actually get a deadline extension — and what's the right way to ask?"</p>
-        <span class="pq-hint">There's a specific way to do it</span>
+        <p class="pq-question">"What lessons did the Odyssey student newsletter reveal about DSA pressure and plagiarism traps?"</p>
+        <span class="pq-hint">Real student reflections</span>
       </a>
 
-      <a href="/results?q=free+access+to+research+papers+journals+student+resources" class="pq-card" id="pq-8">
+      <a href="/results?q=Rise+Up+freshers+fest+and+Bangalore+residential+campus+life" class="pq-card" id="pq-8">
         <div class="pq-top">
-          <span class="pq-tag pq-tag-lab">📖 Resources</span>
-          <span class="pq-arrow">→</span>
+          <span class="pq-tag pq-tag-lab">Campus Culture</span>
+          <span class="pq-arrow">&rarr;</span>
         </div>
-        <p class="pq-question">"How do you access IEEE and research papers for free with a student ID?"</p>
-        <span class="pq-hint">Most students don't know this exists</span>
+        <p class="pq-question">"What goes down at the annual Rise Up freshers event and hostel common room community nights?"</p>
+        <span class="pq-hint">@lifeatsst_official memories</span>
       </a>
 
     </div>
-
-    <div style="text-align:center; margin-top:1.5rem;">
-      <p style="color:var(--text-muted); font-size:0.8125rem; font-family:'Space Mono',monospace; letter-spacing:0.04em;">
-        These are questions seniors have already answered. Click any to hear from them.
-      </p>
-    </div>
-
   </section>
 
+  <!-- ═══ Recent Echoes + Knowledge Gaps 2-Column Section ════════════════ -->
+  <div class="dashboard-duo-grid reveal-on-scroll">
 
-
-  <!-- ═══ Knowledge Gaps callout ══════════════════════════════════════════ -->
-  {% if stats.gap_count > 0 %}
-  <section style="margin-bottom: 3rem;">
-    <div class="gaps-callout">
-      <div class="gaps-callout-icon">🔴</div>
-      <div style="flex: 1;">
-        <h3>{{ stats.gap_count }} question{{ 's' if stats.gap_count != 1 else '' }} your institution can't answer yet</h3>
-        <p>
-          Students have asked these. Nobody has left an Echo.
-          If you know the answer, <strong>be the first ghost.</strong>
-        </p>
+    <!-- Column 1: Recent Echoes -->
+    <div class="duo-col">
+      <div class="duo-header">
+        <div>
+          <h3 class="duo-title">Recent SST Echoes</h3>
+          <span class="duo-caption">Latest advice left by Senior Mentors</span>
+        </div>
+        <a href="/echoes" class="duo-link">View all &rarr;</a>
       </div>
-      <a href="/gaps" class="btn btn-secondary" id="gaps-callout-btn" style="flex-shrink:0;">View Gaps →</a>
-    </div>
-  </section>
-  {% endif %}
 
-  <!-- ═══ Seed data (dev helper — subtle) ═════════════════════════════════ -->
-  {% if stats.total_echoes == 0 %}
-  <div class="card" style="text-align: center; padding: 2rem; margin-bottom: 3rem; border-style: dashed; opacity: 0.65;">
-    <p style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.875rem;">
-      No Echoes yet. Seed the database with 15 demo Echoes to try the search features.
-    </p>
-    <button class="btn btn-secondary btn-sm" id="seed-btn">🌱 Seed Demo Data</button>
+      <div class="echo-cards-stack">
+        {% if recent_echoes %}
+          {% for echo in recent_echoes %}
+            <article class="fancy-echo-card" id="echo-{{ echo.id }}">
+              <div class="fancy-echo-top">
+                <div class="fancy-tags">
+                  <span class="echo-badge-id">ECHO #{{ '%03d' % echo.id }}</span>
+                  <span class="badge-tag">{{ echo.course_tag }}</span>
+                  {% if echo.professor_tag %}
+                    <span class="badge-tag tag-subtle">{{ echo.professor_tag }}</span>
+                  {% endif %}
+                </div>
+                <span class="echo-time-meta">{{ echo.created_at[:10] if echo.created_at else 'Recent' }}</span>
+              </div>
+
+              <div class="fancy-echo-quote">
+                "{{ echo.transcript[:180] }}{% if echo.transcript|length > 180 %}...{% endif %}"
+              </div>
+
+              <div class="fancy-echo-footer">
+                <div class="footer-mentor-info">
+                  <span class="mentor-dot">●</span>
+                  <span>From an SST Senior</span>
+                  {% if echo.confirmations > 1 %}
+                    <span class="dot-sep">&middot;</span>
+                    <span class="confirm-count">{{ echo.confirmations }} confirmed</span>
+                  {% endif %}
+                </div>
+
+                <div class="footer-actions">
+                  {% if echo.audio_path %}
+                    <button
+                      type="button"
+                      class="btn btn-secondary btn-xs audio-play-trigger"
+                      data-audio="{{ url_for('static', filename=echo.audio_path) }}"
+                      data-id="{{ echo.id }}"
+                    >
+                      ▶ Listen
+                    </button>
+                    <audio id="audio-{{ echo.id }}" src="{{ url_for('static', filename=echo.audio_path) }}" preload="none"></audio>
+                  {% endif %}
+                  <a href="/echoes/{{ echo.id }}" class="btn-text-action">Details &rarr;</a>
+                </div>
+              </div>
+            </article>
+          {% endfor %}
+        {% else %}
+          <div class="clean-empty-box">
+            <p class="text-muted">No Echoes recorded yet. Be the first to leave an Echo!</p>
+            <a href="/record" class="btn btn-primary btn-sm" style="margin-top: 0.5rem;">+ Leave an Echo</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Column 2: Knowledge Gaps -->
+    <div class="duo-col">
+      <div class="duo-header">
+        <div>
+          <h3 class="duo-title">Knowledge Gaps</h3>
+          <span class="duo-caption">SST topics with no senior answers yet</span>
+        </div>
+        <a href="/gaps" class="duo-link text-red">View Radar &rarr;</a>
+      </div>
+
+      <div class="gaps-card-stack">
+        {% if top_gaps %}
+          {% for gap in top_gaps %}
+            <div class="gap-fancy-box" id="home-gap-{{ loop.index }}">
+              <div class="gap-fancy-info">
+                <span class="gap-fancy-badge">BLIND SPOT ({{ gap.ask_count }}x asked)</span>
+                <span class="gap-fancy-query">"{{ gap.query_text }}"</span>
+                <span class="gap-fancy-meta">No senior has recorded an answer yet</span>
+              </div>
+              <a href="/record?topic={{ gap.query_text | urlencode }}" class="btn btn-primary btn-xs">
+                🎙 Answer
+              </a>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="clean-empty-box">
+            <p class="text-muted text-sm">No active knowledge gaps. All queried topics have answers!</p>
+          </div>
+        {% endif %}
+
+        <!-- Senior CTA Card -->
+        <div class="senior-cta-card">
+          <div class="senior-cta-icon">🎓</div>
+          <div class="senior-cta-body">
+            <h4>Are you an SST Senior or Mentor?</h4>
+            <p>Leave a 60-second voice note on what caught you off-guard in Year 1 or Industry Immersion.</p>
+            <a href="/record" class="btn btn-primary btn-sm" style="margin-top: 0.5rem;">🎙 Record an Echo</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
-  {% endif %}
+
+  <!-- ═══ Dev Seed Box (Demo helper) ══════════════════════════════════════ -->
+  <div class="dev-seed-box reveal-on-scroll" style="margin-top: 1rem;">
+    <span>⚡ <strong>SST Demo Mode:</strong> Want to reset with fresh Scaler School of Technology memories?</span>
+    <button type="button" class="btn btn-ghost btn-xs" id="seed-btn">Reload SST Demo Data</button>
+  </div>
 
 </div>
 {% endblock %}

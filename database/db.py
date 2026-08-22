@@ -110,6 +110,18 @@ def get_all_echoes() -> list[dict]:
     return result
 
 
+def get_recent_echoes(limit: int = 6) -> list[dict]:
+    """Return the most recent echoes for dashboard and list displays."""
+    with get_db() as conn:
+        rows = conn.execute(
+            """SELECT id, course_tag, professor_tag, topic_tag, transcript,
+                      audio_path, confirmations, created_at
+               FROM echoes ORDER BY created_at DESC LIMIT ?""",
+            (limit,)
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
 def get_echo_by_id(echo_id: int) -> dict | None:
     """Return a single echo dict or None."""
     with get_db() as conn:

@@ -1,60 +1,51 @@
 {% extends "base.html" %}
-{% block title %}Echo #{{ '%03d' % echo.id }} — {{ echo.course_tag }}{% endblock %}
+{% block title %}ECHO #{{ '%03d' % echo.id }} — {{ echo.course_tag }}{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width: 720px;">
+<div class="container" style="max-width: 760px; padding: 2rem 1rem 4rem;">
 
-  <div style="margin-bottom: 1.5rem;">
-    <a href="/echoes" class="btn btn-ghost btn-sm" id="detail-back-btn">← Back to Memories</a>
+  <div style="margin-bottom: 1.25rem;">
+    <a href="/echoes" class="btn btn-ghost btn-sm" id="detail-back-btn">&larr; Back to Echoes</a>
   </div>
 
-  <div class="card" style="padding: 0; overflow: hidden;">
+  <div class="detail-card">
 
-    <!-- Dramatic Echo header -->
-    <div class="echo-detail-header">
-      <div class="echo-detail-num">ECHO #{{ '%03d' % echo.id }}</div>
-
-      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-top: 0.75rem;">
-        <div class="echo-tags">
-          <span class="tag tag-course" style="font-size: 0.875rem; padding: 0.3rem 0.875rem;">{{ echo.course_tag }}</span>
+    <!-- Header -->
+    <div class="detail-header">
+      <div class="detail-header-top">
+        <span class="echo-code">ECHO #{{ '%03d' % echo.id }}</span>
+        <div class="detail-tags">
+          <span class="badge-tag">{{ echo.course_tag }}</span>
           {% if echo.professor_tag %}
-          <span class="tag tag-professor" style="font-size: 0.875rem; padding: 0.3rem 0.875rem;">{{ echo.professor_tag }}</span>
+            <span class="badge-tag tag-subtle">{{ echo.professor_tag }}</span>
           {% endif %}
           {% if echo.topic_tag %}
-          <span class="tag tag-topic" style="font-size: 0.875rem; padding: 0.3rem 0.875rem;">{{ echo.topic_tag }}</span>
+            <span class="badge-tag tag-subtle">{{ echo.topic_tag }}</span>
           {% endif %}
         </div>
         {% if echo.health %}
-        <span class="health-badge health-{{ echo.health.status }}" style="font-size: 0.875rem;">{{ echo.health.label }}</span>
+          <span class="health-pill health-{{ echo.health.status }}">{{ echo.health.label }}</span>
         {% endif %}
       </div>
 
-      {% if echo.created_at %}
-      <p class="echo-detail-age">
-        Recorded {{ echo.health.days_old if echo.health else '?' }} days ago &nbsp;·&nbsp;
-        {{ echo.created_at[:10] }}
-      </p>
-      {% endif %}
-
-      <p class="echo-detail-teaser">
-        "{{ echo.transcript | truncate(120, True, '…') }}"
-      </p>
+      <div class="detail-author-meta">
+        <span>From an SST Senior</span>
+        <span class="dot-sep">&middot;</span>
+        <time>{{ echo.created_at[:10] if echo.created_at else 'Recent' }}</time>
+        {% if echo.confirmations > 1 %}
+          <span class="dot-sep">&middot;</span>
+          <span>Confirmed by {{ echo.confirmations }} students</span>
+        {% endif %}
+      </div>
     </div>
 
-    <!-- Audio player -->
+    <!-- Audio Player (if present) -->
     {% if echo.audio_path %}
-    <div style="padding: 1.25rem 2rem; border-bottom: 1px solid var(--border);">
-      <p style="font-family: 'Space Mono', monospace; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.875rem;">
-        Audio Recording
-      </p>
+    <div class="detail-audio-section">
+      <div class="detail-audio-label">Recorded Audio</div>
       <div class="custom-player" id="custom-player">
         <div class="custom-player-top">
-          <button type="button" class="custom-player-btn" id="detail-play-btn" data-audio="{{ url_for('static', filename=echo.audio_path) }}">▶</button>
-          <div class="custom-player-waveform" id="detail-waveform">
-            {% for i in range(18) %}
-            <div class="waveform-bar" style="height: 3px;"></div>
-            {% endfor %}
-          </div>
+          <button type="button" class="btn btn-secondary btn-sm" id="detail-play-btn" data-audio="{{ url_for('static', filename=echo.audio_path) }}">▶ Play Recording</button>
           <span class="custom-player-times" id="detail-times">0:00 / 0:00</span>
         </div>
         <div class="custom-player-progress" id="detail-progress" title="Seek">
@@ -65,132 +56,27 @@
     </div>
     {% endif %}
 
-    <!-- Full transcript -->
-    <div class="echo-detail-transcript-wrap">
-      <p style="font-family: 'Space Mono', monospace; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.875rem;">
-        Transcript
-      </p>
-      <p class="echo-detail-transcript" id="detail-transcript">{{ echo.transcript }}</p>
+    <!-- Transcript Body -->
+    <div class="detail-transcript-section">
+      <div class="detail-transcript-label">Transcript / Advice</div>
+      <blockquote class="detail-transcript-body" id="detail-transcript">
+        "{{ echo.transcript }}"
+      </blockquote>
     </div>
 
-    <!-- Metadata -->
-    <div style="padding: 1.25rem 2rem; border-top: 1px solid var(--border); background: var(--bg-secondary);">
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem;">
-        <div>
-          <p style="font-size: 0.7rem; color: var(--text-muted); font-family: 'Space Mono', monospace; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.25rem;">Created</p>
-          <p style="font-size: 0.875rem; color: var(--text-primary);">{{ echo.created_at[:16] if echo.created_at else '—' }}</p>
-        </div>
-        <div>
-          <p style="font-size: 0.7rem; color: var(--text-muted); font-family: 'Space Mono', monospace; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.25rem;">Confirmations</p>
-          <p style="font-size: 0.875rem; color: var(--text-primary);">{{ echo.confirmations }} senior{{ 's' if echo.confirmations != 1 else '' }}</p>
-        </div>
-        {% if echo.health %}
-        <div>
-          <p style="font-size: 0.7rem; color: var(--text-muted); font-family: 'Space Mono', monospace; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.25rem;">Freshness</p>
-          <p style="font-size: 0.875rem; color: var(--text-primary);">{{ echo.health.freshness_pct }}% ({{ echo.health.days_old }} days old)</p>
-        </div>
-        {% endif %}
+    <!-- Helpfulness & QR code -->
+    <div class="detail-footer-bar">
+      <div class="detail-trust-group">
+        <span class="text-xs text-muted">Was this helpful?</span>
+        <button type="button" class="btn btn-ghost btn-xs trust-btn" id="detail-trust-yes" data-echo-id="{{ echo.id }}" data-vote="yes">👍 Helpful</button>
+        <button type="button" class="btn btn-ghost btn-xs trust-btn" id="detail-trust-no" data-echo-id="{{ echo.id }}" data-vote="no">👎 Not helpful</button>
       </div>
-    </div>
-
-    <!-- Trust votes -->
-    <div style="padding: 1rem 2rem; border-top: 1px solid var(--border);">
-      <div class="trust-row" style="border-top: none; padding-top: 0; margin-top: 0;">
-        <span class="trust-label">Was this useful?</span>
-        <button type="button" class="trust-btn" id="detail-trust-yes" data-echo-id="{{ echo.id }}" data-vote="yes">❤ Useful</button>
-        <button type="button" class="trust-btn" id="detail-trust-no" data-echo-id="{{ echo.id }}" data-vote="no">👎 Not anymore</button>
-      </div>
-    </div>
-
-    <!-- Actions -->
-    <div style="padding: 1.25rem 2rem; border-top: 1px solid var(--border); display: flex; gap: 0.75rem; flex-wrap: wrap;">
-      <a href="/qr/{{ echo.id }}" class="btn btn-ghost" target="_blank" id="detail-qr-btn">📱 JIT Handover QR</a>
-      <a href="/results?q={{ (echo.topic_tag or echo.course_tag) | urlencode }}" class="btn btn-ghost" id="detail-related-btn">👻 Related Echoes</a>
-      <form action="/echoes/{{ echo.id }}/delete" method="POST" style="margin-left: auto;"
-            onsubmit="return confirm('Delete this Echo permanently?');">
-        <button type="submit" class="btn btn-danger btn-sm" id="detail-delete-btn">Delete</button>
-      </form>
+      <a href="/qr/{{ echo.id }}" class="btn btn-ghost btn-xs" target="_blank" title="Handover QR Code">
+        QR Handover Link
+      </a>
     </div>
 
   </div>
 
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-  // Custom audio player for echo detail
-  (function() {
-    const playBtn = document.getElementById('detail-play-btn');
-    if (!playBtn) return;
-
-    const audio = document.getElementById('detail-audio');
-    const waveform = document.getElementById('detail-waveform');
-    const timesEl = document.getElementById('detail-times');
-    const progressEl = document.getElementById('detail-progress');
-    const fillEl = document.getElementById('detail-progress-fill');
-
-    function fmt(s) {
-      const m = Math.floor(s / 60);
-      const sec = Math.floor(s % 60);
-      return `${m}:${sec.toString().padStart(2,'0')}`;
-    }
-
-    playBtn.addEventListener('click', () => {
-      if (audio.paused) {
-        audio.play();
-        playBtn.textContent = '⏸';
-        waveform.classList.add('playing');
-      } else {
-        audio.pause();
-        playBtn.textContent = '▶';
-        waveform.classList.remove('playing');
-      }
-    });
-
-    audio.addEventListener('timeupdate', () => {
-      const pct = audio.duration ? (audio.currentTime / audio.duration) * 100 : 0;
-      fillEl.style.width = pct + '%';
-      timesEl.textContent = `${fmt(audio.currentTime)} / ${fmt(audio.duration || 0)}`;
-    });
-
-    audio.addEventListener('ended', () => {
-      playBtn.textContent = '▶';
-      waveform.classList.remove('playing');
-      fillEl.style.width = '0%';
-    });
-
-    audio.addEventListener('loadedmetadata', () => {
-      timesEl.textContent = `0:00 / ${fmt(audio.duration)}`;
-    });
-
-    progressEl.addEventListener('click', (e) => {
-      const rect = progressEl.getBoundingClientRect();
-      const pct = (e.clientX - rect.left) / rect.width;
-      audio.currentTime = pct * (audio.duration || 0);
-    });
-
-    // Trust votes for detail page
-    document.querySelectorAll('[id^="detail-trust-"]').forEach(btn => {
-      const echoId = btn.dataset.echoId;
-      const vote = btn.dataset.vote;
-      const key = `echo-trust-${echoId}`;
-      const stored = localStorage.getItem(key);
-      if (stored === vote) btn.classList.add(vote === 'yes' ? 'voted-yes' : 'voted-no');
-
-      btn.addEventListener('click', () => {
-        const current = localStorage.getItem(key);
-        if (current === vote) {
-          localStorage.removeItem(key);
-          btn.classList.remove('voted-yes', 'voted-no');
-        } else {
-          localStorage.setItem(key, vote);
-          document.getElementById('detail-trust-yes').classList.remove('voted-yes');
-          document.getElementById('detail-trust-no').classList.remove('voted-no');
-          btn.classList.add(vote === 'yes' ? 'voted-yes' : 'voted-no');
-        }
-      });
-    });
-  })();
-</script>
 {% endblock %}
