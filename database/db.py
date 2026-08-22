@@ -140,45 +140,81 @@ def log_search(query_text: str, best_match_score: float | None):
         )
 
 
-def get_knowledge_gaps(threshold: float | None = None, limit: int = 50) -> list[dict]:
+def get_knowledge_gaps(threshold: float | None = None, limit: int = 50, include_resolved: bool = False) -> tuple[list[dict], list[dict]]:
     """
-    Return searches grouped by query_text where best_match_score < threshold.
-    Ordered by frequency (most-asked unanswered questions first).
+    Return active and resolved knowledge gaps.
+    Dynamically checks current echoes to determine if past searches now have matching answers.
+
+    Returns:
+        (active_gaps, resolved_gaps)
     """
+    from config import Config
+    from services.search import semantic_search
+
     if threshold is None:
-        from config import Config
         threshold = Config.GAP_THRESHOLD
 
+    # Fetch unique searched queries
     with get_db() as conn:
         rows = conn.execute(
             """
             SELECT
                 query_text,
-                COUNT(*)        AS ask_count,
-                AVG(best_match_score) AS avg_score,
-                MIN(created_at) AS first_asked,
-                MAX(created_at) AS last_asked
+                COUNT(*)              AS ask_count,
+                MIN(created_at)       AS first_asked,
+                MAX(created_at)       AS last_asked
             FROM searches
-            WHERE best_match_score < ? OR best_match_score IS NULL
             GROUP BY LOWER(TRIM(query_text))
             ORDER BY ask_count DESC
             LIMIT ?
             """,
-            (threshold, limit)
+            (limit * 2,)
         ).fetchall()
-    return [dict(r) for r in rows]
+
+    echoes = get_all_echoes()
+    active_gaps = []
+    resolved_gaps = []
+
+    for r in rows:
+        gap = dict(r)
+        query = gap["query_text"]
+
+        # If no echoes in DB at all, all searches are active gaps
+        if not echoes:
+            gap["best_match_score"] = 0.0
+            active_gaps.append(gap)
+            continue
+
+        try:
+            matches = semantic_search(query, threshold=threshold, top_k=1, log=False)
+            if matches:
+                best_match = matches[0]
+                gap["best_match_score"] = best_match.get("similarity", 0.0)
+                gap["matched_course"] = best_match.get("course_tag")
+                gap["matched_echo_id"] = best_match.get("id")
+                resolved_gaps.append(gap)
+            else:
+                gap["best_match_score"] = 0.0
+                active_gaps.append(gap)
+
+        except Exception as e:
+            print(f"[Gaps] Error evaluating query '{query}': {e}")
+            active_gaps.append(gap)
+
+    return active_gaps[:limit], resolved_gaps[:limit]
 
 
 def get_search_stats() -> dict:
-    """Basic stats for the admin dashboard."""
+    """Accurate live stats for dashboard and gaps page."""
     with get_db() as conn:
         total_echoes = conn.execute("SELECT COUNT(*) FROM echoes").fetchone()[0]
         total_searches = conn.execute("SELECT COUNT(*) FROM searches").fetchone()[0]
-        gap_count = conn.execute(
-            "SELECT COUNT(DISTINCT LOWER(TRIM(query_text))) FROM searches WHERE best_match_score < 0.45 OR best_match_score IS NULL"
-        ).fetchone()[0]
+
+    active_gaps, resolved_gaps = get_knowledge_gaps()
+
     return {
         "total_echoes": total_echoes,
         "total_searches": total_searches,
-        "gap_count": gap_count,
+        "gap_count": len(active_gaps),
+        "resolved_count": len(resolved_gaps),
     }

@@ -1,7 +1,7 @@
 """
 services/search.py
 -------------------
-Semantic search over stored Echoes using cosine similarity.
+Semantic search over stored Echoes using cosine similarity and course/entity awareness.
 Loads all echo embeddings from the DB, computes similarity against the query,
 and returns ranked results above a threshold.
 
@@ -11,10 +11,19 @@ Usage:
     # Returns list of dicts with echo data + similarity score
 """
 
+import re
 import numpy as np
 from database.db import get_all_echoes, log_search
 from services.embeddings import embed_query
 from config import Config
+
+
+def extract_course_code(text: str) -> str | None:
+    """Extract standard course codes like CS301, MATH101, ICP101, EC-202, etc."""
+    match = re.search(r'\b([A-Za-z]{2,5}\s*[-]?\s*\d{3,4}[A-Za-z]?)\b', text, re.IGNORECASE)
+    if match:
+        return re.sub(r'[\s-]', '', match.group(1)).upper()
+    return None
 
 
 def cosine_similarity(vec_a: np.ndarray, vec_b: np.ndarray) -> float:
@@ -34,6 +43,8 @@ def semantic_search(
 ) -> list[dict]:
     """
     Search all Echoes semantically using cosine similarity.
+    Includes course-code context filtering so advice for one course isn't
+    falsely returned for a completely different course.
 
     Args:
         query:      The user's plain-language question.
@@ -48,6 +59,8 @@ def semantic_search(
     if threshold is None:
         threshold = Config.SIMILARITY_THRESHOLD
 
+    query_course = extract_course_code(query)
+
     # Embed the query
     query_vec = np.array(embed_query(query), dtype=np.float32)
 
@@ -60,7 +73,21 @@ def semantic_search(
         # Handle dimension mismatch (fallback vs Gemini embeddings)
         if echo_vec.shape != query_vec.shape:
             continue
+
         sim = cosine_similarity(query_vec, echo_vec)
+        echo_course = (echo.get("course_tag") or "").upper().replace(" ", "").replace("-", "")
+
+        # If user explicitly asked about a course code (e.g. "ICP101"):
+        if query_course:
+            # Check if this echo is for that course or mentions it in transcript
+            is_matching_course = (query_course in echo_course) or (query_course in (echo.get("transcript") or "").upper())
+            if not is_matching_course:
+                # Do not cross-pollinate course-specific tips
+                continue
+            else:
+                # Boost confidence for direct course match
+                sim = min(1.0, sim + 0.05)
+
         if sim >= threshold:
             results.append({**echo, "similarity": sim})
 
@@ -70,7 +97,7 @@ def semantic_search(
 
     # Log the search
     if log:
-        best_score = results[0]["similarity"] if results else None
+        best_score = results[0]["similarity"] if results else 0.0
         log_search(query, best_score)
 
     return results

@@ -20,10 +20,10 @@ class Config:
     UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), "static", "audio")
     MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50 MB max audio
 
-    # Search thresholds
-    SIMILARITY_THRESHOLD = 0.45      # Above this → a "match"
-    GAP_THRESHOLD = 0.45             # Below this → logged as a knowledge gap
-    ASK_BATCH_MIN_MATCHES = 2        # Min matches to trigger Ask the Batch
+    # Search thresholds (calibrated for Gemini 3072-dim embeddings)
+    SIMILARITY_THRESHOLD = 0.68      # Above this -> a "match"
+    GAP_THRESHOLD = 0.68             # Below this -> logged as a knowledge gap
+    ASK_BATCH_MIN_MATCHES = 1        # Min matches to trigger Ask the Batch (even 1 relevant match can synthesize)
     ASK_BATCH_MAX_CONTEXTS = 5       # How many echoes to pass to LLM
 
     # Memory health (days)

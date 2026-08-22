@@ -16,12 +16,12 @@
   <!-- Stats row -->
   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2.5rem;">
     <div class="card" style="text-align: center; padding: 1.5rem;">
-      <div class="stat-value" style="font-size: 2rem;" data-count="{{ stats.gap_count }}">{{ stats.gap_count }}</div>
+      <div class="stat-value" style="font-size: 2rem; color: var(--purple-400);" data-count="{{ stats.gap_count }}">{{ stats.gap_count }}</div>
       <div class="stat-label">Unanswered Questions</div>
     </div>
     <div class="card" style="text-align: center; padding: 1.5rem;">
-      <div class="stat-value" style="font-size: 2rem;" data-count="{{ stats.total_searches }}">{{ stats.total_searches }}</div>
-      <div class="stat-label">Total Searches</div>
+      <div class="stat-value" style="font-size: 2rem; color: var(--green);" data-count="{{ stats.resolved_count }}">{{ stats.resolved_count }}</div>
+      <div class="stat-label">Filled by Seniors</div>
     </div>
     <div class="card" style="text-align: center; padding: 1.5rem;">
       <div class="stat-value" style="font-size: 2rem;" data-count="{{ stats.total_echoes }}">{{ stats.total_echoes }}</div>
@@ -35,51 +35,86 @@
     <div>
       <h4 style="margin-bottom: 0.25rem;">What are Knowledge Gaps?</h4>
       <p class="text-secondary text-sm">
-        Every time a student searches for something and Echo can't find a strong match,
+        Every time a student searches for something and Echo can't find a matching answer,
         it logs the query as a Knowledge Gap. These are the blind spots of your institution's collective memory.
-        Seniors who know the answers can fill them by leaving an Echo.
+        As soon as a senior records an Echo answering the topic, the gap is automatically resolved!
       </p>
     </div>
   </div>
 
-  {% if gaps %}
-  <!-- Gaps list -->
-  <div style="display: flex; flex-direction: column; gap: 0.625rem;">
-    {% for gap in gaps %}
-    <div class="gap-item">
-      <div style="flex: 1; min-width: 0;">
-        <div class="gap-query">{{ gap.query_text }}</div>
-        <div class="gap-meta">
-          First asked {{ gap.first_asked[:10] if gap.first_asked else '—' }}
-          {% if gap.avg_score %}
-          · Best match score: {{ (gap.avg_score * 100) | round | int }}%
+  <!-- Section: Active Unanswered Gaps -->
+  <div style="margin-bottom: 3rem;">
+    <h3 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+      <span>🔴 Active Unanswered Gaps</span>
+      <span class="badge" style="background: rgba(239, 68, 68, 0.2); color: var(--red); font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 999px;">{{ gaps | length }}</span>
+    </h3>
+
+    {% if gaps %}
+    <div style="display: flex; flex-direction: column; gap: 0.625rem;">
+      {% for gap in gaps %}
+      <div class="gap-item">
+        <div style="flex: 1; min-width: 0;">
+          <div class="gap-query">{{ gap.query_text }}</div>
+          <div class="gap-meta">
+            First asked {{ gap.first_asked[:10] if gap.first_asked else '—' }}
+            {% if gap.best_match_score %}
+            · Best match: {{ (gap.best_match_score * 100) | round | int }}%
+            {% endif %}
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.625rem; flex-shrink: 0;">
+          <span class="gap-count">{{ gap.ask_count }}× asked</span>
+          <a
+            href="/record?topic={{ gap.query_text | urlencode }}"
+            class="btn btn-primary btn-sm"
+            title="Leave an Echo to answer this"
+          >🎙 Answer</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state" style="padding: 2rem;">
+      <div class="empty-icon" style="font-size: 2rem;">🎉</div>
+      <h4>No open knowledge gaps right now!</h4>
+      <p class="text-sm text-muted">All searched topics currently have senior answers in the database.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Section: Resolved Gaps -->
+  {% if resolved_gaps %}
+  <div style="margin-bottom: 2.5rem;">
+    <h3 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-secondary);">
+      <span>🟢 Recently Filled by Seniors</span>
+      <span class="badge" style="background: rgba(34, 197, 94, 0.2); color: var(--green); font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 999px;">{{ resolved_gaps | length }}</span>
+    </h3>
+
+    <div style="display: flex; flex-direction: column; gap: 0.625rem; opacity: 0.9;">
+      {% for gap in resolved_gaps %}
+      <div class="gap-item" style="border-left: 3px solid var(--green);">
+        <div style="flex: 1; min-width: 0;">
+          <div class="gap-query" style="text-decoration: none;">
+            {{ gap.query_text }}
+          </div>
+          <div class="gap-meta" style="color: var(--green);">
+            ✓ Answered in {{ gap.matched_course or 'Echo' }} ({{ (gap.best_match_score * 100) | round | int }}% match)
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.625rem; flex-shrink: 0;">
+          {% if gap.matched_echo_id %}
+          <a href="/echoes/{{ gap.matched_echo_id }}" class="btn btn-ghost btn-sm">View Echo</a>
           {% endif %}
         </div>
       </div>
-      <div style="display: flex; align-items: center; gap: 0.625rem; flex-shrink: 0;">
-        <span class="gap-count">{{ gap.ask_count }}× asked</span>
-        <a
-          href="/record?topic={{ gap.query_text | urlencode }}"
-          class="btn btn-ghost btn-sm"
-          title="Leave an Echo to answer this"
-        >Answer</a>
-      </div>
+      {% endfor %}
     </div>
-    {% endfor %}
-  </div>
-
-  {% else %}
-  <div class="empty-state">
-    <div class="empty-icon">🕳</div>
-    <h3>No gaps yet</h3>
-    <p>When students search for things Echo can't answer well, they'll appear here.</p>
-    <p class="text-sm text-muted" style="margin-top: 0.5rem;">Try making a few searches on the <a href="/search">Ask page</a>.</p>
   </div>
   {% endif %}
 
   <!-- Call to action -->
   <div style="margin-top: 3rem; text-align: center; padding: 2rem; border-top: 1px solid var(--border);">
-    <h3 style="margin-bottom: 0.5rem;">Know the answers?</h3>
+    <h3 style="margin-bottom: 0.5rem;">Know something that isn't here?</h3>
     <p class="text-secondary" style="margin-bottom: 1.25rem;">Each Echo you leave could save a junior weeks of confusion.</p>
     <a href="/record" class="btn btn-primary btn-lg">🎙 Leave an Echo</a>
   </div>

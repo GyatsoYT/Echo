@@ -24,9 +24,9 @@ admin_bp = Blueprint("admin", __name__)
 
 @admin_bp.route("/gaps", methods=["GET"])
 def knowledge_gaps():
-    gaps = get_knowledge_gaps()
+    active_gaps, resolved_gaps = get_knowledge_gaps()
     stats = get_search_stats()
-    return render_template("gaps.html", gaps=gaps, stats=stats)
+    return render_template("gaps.html", gaps=active_gaps, resolved_gaps=resolved_gaps, stats=stats)
 
 
 # ── Dashboard stats (JSON) ──────────────────────────────────────────────────

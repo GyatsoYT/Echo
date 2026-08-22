@@ -86,13 +86,15 @@ def ask_the_batch(question: str, echoes: list[dict]) -> dict:
     prompt = f"""You are Echo, an institutional memory system for a university.
 A junior student just asked: "{question}"
 
-Here are {n} relevant Echoes (voice memories) left by seniors who experienced this:
+Here are {n} potentially related Echoes (voice memories) left by seniors:
 
 {context_block}
 
-Write a concise, helpful 2 to 4 sentence synthesis of what these seniors are saying.
-Be direct and practical. Start with "Seniors say..." or a similar framing.
-Do not make up information beyond what the Echoes contain."""
+Instructions:
+1. If the provided Echoes do NOT contain real information to answer the student's question (e.g. if the question is unrelated, off-topic, or asks about concepts never mentioned in the memories), reply EXACTLY with:
+"No seniors have shared memories answering this specific question yet. This query has been added to our Knowledge Gaps tracker."
+2. Otherwise, write a concise, helpful 2 to 4 sentence synthesis of what these seniors advise.
+3. Be direct, practical, and factual to the provided memories only. Do not hallucinate external facts."""
 
     # 1. Try Gemini first (fast & reliable)
     if Config.GEMINI_API_KEY:
