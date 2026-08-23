@@ -143,7 +143,7 @@ function isHeuristicValidQAPair(question, answer) {
   if (aLower.endsWith("?") && aLower.length < 35) return false;
 
   // Question words (English + Hindi/Hinglish anywhere in query)
-  const questionPattern = /\b(what|how|when|where|why|which|can|is|does|do|should|could|would|who|any|will|are|sir|prof|professor|pushkar|mehta|sharma|math|cs|ec|icp|exam|lab|attendance|assignment|portal|hostel|wifi|placement|kaun|kon|kya|kab|kaise|kyun|kyu|kaha|kahan|kitna|kitne|kitni|konsa|konsi|batao|bata|bataiye|kisko|kisne)\b/i;
+  const questionPattern = /\b(what|how|when|where|why|which|can|is|does|do|should|could|would|who|whom|whose|any|will|are|sir|prof|professor|pushkar|mehta|sharma|math|cs|ec|icp|exam|lab|attendance|assignment|portal|hostel|wifi|placement|kaun|kon|kya|kab|kaise|kaisa|kaisi|kesa|kesi|kese|kyun|kyu|kaha|kahan|kahape|kidhar|kidhr|kitna|kitne|kitni|konsa|konsi|konse|kaunsa|kaunsi|kisme|kisko|kisne|batao|bata|bataiye|btao|pata|scene)\b|(\b(h|hai|hein)\s+kya\b)/i;
   const isQuestion = question.includes("?") || questionPattern.test(qLower);
 
   // Reject generic conversational noise
@@ -310,7 +310,7 @@ async function searchEchoSynthesis(query) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query }),
-    }, 3500);
+    }, 7000);
 
     if (!res.ok) return null;
     const data = await res.json();
@@ -391,7 +391,7 @@ async function saveToEcho(question, answer, groupName = "") {
         source:           "whatsapp",
         group_name:       groupName,
       }),
-    }, 4500);
+    }, 6500);
 
     const data = await res.json();
     if (res.ok) {
@@ -424,7 +424,7 @@ async function confirmEcho(queryOrId, groupName = "") {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
-    }, 3500);
+    }, 5000);
 
     if (res.ok) {
       const data = await res.json();
@@ -652,7 +652,7 @@ async function startBot() {
 
         const isQuestion =
           cleanText.includes("?") ||
-          /\b(what|how|when|where|who|why|which|can|is|does|do|should|could|would|are|will|whom|whose|kaun|kon|kya|kab|kaise|kyun|kyu|kaha|kahan|kitna|kitne|kitni|konsa|konsi|kisme|kisko|kisne|batao|bata|bataiye|pata)\b/i.test(cleanText);
+          /\b(what|how|when|where|who|why|which|can|is|does|do|should|could|would|are|will|whom|whose|kaun|kon|kya|kab|kaise|kaisa|kaisi|kesa|kesi|kese|kyun|kyu|kaha|kahan|kahape|kidhar|kidhr|kitna|kitne|kitni|konsa|konsi|konse|kaunsa|kaunsi|kisme|kisko|kisne|batao|bata|bataiye|btao|pata|scene)\b|(\b(h|hai|hein)\s+kya\b)/i.test(cleanText);
 
         // ── Flow 1: Explicit Quoted Reply ──────────────────────────────────────
         if (quotedMsg && quotedId && !isConfirmation) {
