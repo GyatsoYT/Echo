@@ -128,6 +128,41 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 4000) {
   }
 }
 
+// ── Comprehensive Question & Inquiring Intent Detection ───────────────────────
+
+function detectQuestionIntent(text) {
+  if (!text) return false;
+  const clean = text.trim();
+  const lower = clean.toLowerCase();
+
+  // 1. Literal question marks
+  if (clean.includes("?") || clean.includes("؟")) return true;
+
+  // 2. Reject short noise and greetings early
+  if (clean.length < 6) return false;
+  if (/^(ok|okay|k|thanks|thank you|ty|thx|lol|lmao|haha|nice|cool|yep|yes|no|done|fine|sahi hai|theek hai|got it|gm|gn|good morning|good night|congrats|congratulations)\b/i.test(lower) && clean.length < 25) {
+    return false;
+  }
+
+  // 3. Question interrogatives (English + Hindi / Hinglish anywhere in sentence)
+  const questionWords = /\b(what|how|when|where|who|whom|whose|why|which|can|could|would|should|is|are|does|do|did|will|shall|anyone|anybody|someone|somebody|kaun|kon|kya|kab|kaise|kaisa|kaisi|kesa|kesi|kese|kyun|kyu|kaha|kahan|kahape|kidhar|kidhr|kitna|kitne|kitni|konsa|konsi|konse|kaunsa|kaunsi|kisme|kisko|kisne|batao|bata|bataiye|btao|pata|scene)\b/i;
+  if (questionWords.test(lower)) return true;
+
+  // 4. Inquiring phrases & requests (e.g. "tell me about", "anyone knows", "need help with", "h kya")
+  const inquiringPhrases = /\b(tell me|tell us|guide me|guide on|help with|help regarding|any update|any idea|any info|need info|need notes|need help|pls share|please share|share link|how to|where to|details on|info on|doubt in|doubt on|confused about|queries regarding|kisi ko|koi bata|bata do|bata dena|btao na|h kya|hai kya|hein kya|pata hai kya|pata h kya|kaisa h|kaisa hai|mil sakta hai|milega kya|ho sakta hai)\b/i;
+  if (inquiringPhrases.test(lower)) return true;
+
+  // 5. Campus keywords paired with inquiry context (e.g. "Pushkar sir cabin", "ICP syllabus")
+  const campusKeywords = /\b(pushkar|anshuman|sharma|mehta|prof|professor|sir|maam|mam|faculty|mentor|bsm|icp|dsa|math|cs|ai|pdc|cgr|gpa|attendance|assignment|deadline|submission|exam|midterm|endsem|hall ticket|portal|dashboard|hostel|mess|wifi|lan|internship|placement|gsoc|sil|bits|iitm|iit madras|shark tank|syllabus|grading|criteria|policy|exemption|leave)\b/i;
+  const queryModifiers = /\b(timing|schedule|syllabus|grading|cabin|contact|room|venue|date|time|link|process|rules|requirement|criteria|review|rating|format|pattern|difficulty|tough|easy|strict|chill|extension|portal|office)\b/i;
+
+  if (campusKeywords.test(lower) && queryModifiers.test(lower)) {
+    return true;
+  }
+
+  return false;
+}
+
 // ── Smart heuristic fallback ──────────────────────────────────────────────────
 
 function isHeuristicValidQAPair(question, answer) {
@@ -140,11 +175,9 @@ function isHeuristicValidQAPair(question, answer) {
 
   // Answer cannot be just a repetition of the question or a question itself
   if (qLower === aLower) return false;
-  if (aLower.endsWith("?") && aLower.length < 35) return false;
+  if (detectQuestionIntent(answer) && aLower.length < 35) return false;
 
-  // Question words (English + Hindi/Hinglish anywhere in query)
-  const questionPattern = /\b(what|how|when|where|why|which|can|is|does|do|should|could|would|who|whom|whose|any|will|are|sir|prof|professor|pushkar|mehta|sharma|math|cs|ec|icp|exam|lab|attendance|assignment|portal|hostel|wifi|placement|kaun|kon|kya|kab|kaise|kaisa|kaisi|kesa|kesi|kese|kyun|kyu|kaha|kahan|kahape|kidhar|kidhr|kitna|kitne|kitni|konsa|konsi|konse|kaunsa|kaunsi|kisme|kisko|kisne|batao|bata|bataiye|btao|pata|scene)\b|(\b(h|hai|hein)\s+kya\b)/i;
-  const isQuestion = question.includes("?") || questionPattern.test(qLower);
+  const isQuestion = detectQuestionIntent(question);
 
   // Reject generic conversational noise
   const noisePattern = /^(ok|okay|k|thanks|thank you|ty|thx|lol|lmao|haha|nice|cool|yep|yes|no|done|fine|sahi hai|theek hai|got it)\b/i;
@@ -652,9 +685,7 @@ async function startBot() {
           }
         }
 
-        const isQuestion =
-          cleanText.includes("?") ||
-          /\b(what|how|when|where|who|why|which|can|is|does|do|should|could|would|are|will|whom|whose|kaun|kon|kya|kab|kaise|kaisa|kaisi|kesa|kesi|kese|kyun|kyu|kaha|kahan|kahape|kidhar|kidhr|kitna|kitne|kitni|konsa|konsi|konse|kaunsa|kaunsi|kisme|kisko|kisne|batao|bata|bataiye|btao|pata|scene)\b|(\b(h|hai|hein)\s+kya\b)/i.test(cleanText);
+        const isQuestion = detectQuestionIntent(cleanText);
 
         // ── Flow 1: Explicit Quoted Reply ──────────────────────────────────────
         if (quotedMsg && quotedId && !isConfirmation) {
@@ -749,14 +780,49 @@ async function startBot() {
                   `_💡 Seniors have previously answered this in Echo._\n` +
                   `🔗 *Read more & see sources:*\n${searchResult.url}`;
 
-                await sock.sendMessage(jid, {
-                  text: formattedReply,
-                  quoted: msg,
-                });
-                log(`Auto-reply sent for question in "${groupName}": "${cleanText.slice(0, 60)}"`);
+                try {
+                  // 1. Try sending directly into the group
+                  await sock.sendMessage(jid, {
+                    text: formattedReply,
+                    quoted: msg,
+                  });
+                  log(`Auto-reply sent for question in "${groupName}": "${cleanText.slice(0, 60)}"`);
+                } catch (groupSendErr) {
+                  // 2. If group is an Announcement Channel / locked, send via direct message (DM)
+                  if (senderId && senderId !== jid) {
+                    const dmReply =
+                      `👻 *Echo — Answer to your question in ${groupName}:*\n\n` +
+                      `"${searchResult.answer}"\n\n` +
+                      `_💡 Seniors have previously answered this in Echo._\n` +
+                      `🔗 *Read more & see sources:*\n${searchResult.url}`;
+                    await sock.sendMessage(senderId, { text: dmReply });
+                    log(`Auto-reply sent via private DM to sender for question in announcement group "${groupName}"`);
+                  } else {
+                    warn("Auto-reply failed:", groupSendErr.message);
+                  }
+                }
               } catch (replyErr) {
-                warn("Auto-reply failed:", replyErr.message);
+                warn("Auto-reply error:", replyErr.message);
               }
+            }
+          }
+        }
+
+        // ── Flow 4: Auto-capture Campus Announcements & Official Notices ───────
+        if (!isQuestion && !quotedMsg && !isConfirmation && cleanText.length >= 35) {
+          const isAnnouncement =
+            /\b(announcement|notice|important|deadline|extended|rescheduled|postponed|schedule|exam|quiz|submission|hall ticket|attendance|exemption|portal|registration|session|class|timing|room|venue|instructions)\b/i.test(cleanText);
+          if (isAnnouncement) {
+            log(`\n[Official Campus Announcement Detected in "${groupName}"]`);
+            log(`  Text: "${cleanText.slice(0, 80)}..."`);
+            const firstLine = cleanText.split("\n")[0].slice(0, 70);
+            const echoId = await saveToEcho(
+              `Announcement in ${groupName}: ${firstLine}`,
+              cleanText,
+              groupName
+            );
+            if (echoId) {
+              await sendGhostReaction(sock, jid, msg.key);
             }
           }
         }
