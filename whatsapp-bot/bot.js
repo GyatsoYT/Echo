@@ -1,23 +1,3 @@
-/**
- * Echo WhatsApp Capture Bot
- * ─────────────────────────
- * Built with @whiskeysockets/baileys
- *
- * What it does:
- *   1. Listens in a WhatsApp group for "reply-to-message" events
- *   2. Uses an LLM (Groq, free) to verify the original is a genuine
- *      campus/college question and the reply is a genuine answer
- *   3. If both pass, POSTs to your Echo Flask backend as a new Ghost
- *   4. Optionally, when someone asks a question (non-reply), checks
- *      the Echo search API and replies with a pointer if found
- *
- * Setup:
- *   npm install
- *   node bot.js
- *   → Scan the QR code with the bot's WhatsApp account
- *   → Add the bot number to your test WhatsApp group
- */
-
 import makeWASocket, {
   useMultiFileAuthState,
   DisconnectReason,
@@ -51,42 +31,21 @@ function getLocalLanIp() {
   return "127.0.0.1";
 }
 
-// ── Config ───────────────────────────────────────────────────────────────────
-
 const lanIp = getLocalLanIp();
 
 const CONFIG = {
-  // Flask backend URL (change port if different)
   FLASK_URL: process.env.FLASK_URL || "http://127.0.0.1:5000",
-
-  // Public/LAN URL for clickable links in WhatsApp messages
   PUBLIC_URL: process.env.PUBLIC_URL || `http://${lanIp}:5000`,
-
-  // Optional phone number for 8-digit pairing code (e.g. 919876543210)
   PHONE_NUMBER: process.env.PHONE_NUMBER || "",
-
-  // API keys for quality filtering
   GROQ_API_KEY: process.env.GROQ_API_KEY || "",
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || "",
-
-  // Minimum length for a message to even be considered
   MIN_QUESTION_LEN: 10,
   MIN_ANSWER_LEN:   12,
-
-  // Cooldown: don't resend the same answer for the same question within N ms
-  // (keyed per sender+question fingerprint, NOT per sender — so different questions always fire)
   AUTO_REPLY_COOLDOWN_MS: 90_000,
-
-  // Auth session folder
-  // On Railway: set AUTH_FOLDER=/data/auth_session (persistent volume)
-  // Locally: ./auth_session
   AUTH_FOLDER: process.env.AUTH_FOLDER || path.join(__dirname, "auth_session"),
-
-  // Whether to post pointer replies in group when Q matches an existing Echo
   ENABLE_POINTER_REPLIES: true,
 };
 
-// Load .env manually
 try {
   const envPath = path.join(__dirname, ".env");
   if (fs.existsSync(envPath)) {
@@ -104,17 +63,11 @@ try {
   }
 } catch {}
 
-// ── Logger ───────────────────────────────────────────────────────────────────
-
-const logger = pino({ level: "silent" }); // suppress Baileys internal noise
+const logger = pino({ level: "silent" });
 const log = (...args) => console.log("[EchoBot]", ...args);
 const warn = (...args) => console.warn("[EchoBot] WARN:", ...args);
 
-// ── Auto-reply cooldown map ───────────────────────────────────────────────────
-
 const autoReplyCooldowns = new Map();
-
-// ── Safe fetch with timeout to prevent hanging ────────────────────────────────
 
 async function fetchWithTimeout(url, options = {}, timeoutMs = 4000) {
   const controller = new AbortController();
@@ -129,31 +82,24 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 4000) {
   }
 }
 
-// ── Comprehensive Question & Inquiring Intent Detection ───────────────────────
-
 function detectQuestionIntent(text) {
   if (!text) return false;
   const clean = text.trim();
   const lower = clean.toLowerCase();
 
-  // 1. Literal question marks
   if (clean.includes("?") || clean.includes("؟")) return true;
 
-  // 2. Reject short noise and greetings early
   if (clean.length < 6) return false;
   if (/^(ok|okay|k|thanks|thank you|ty|thx|lol|lmao|haha|nice|cool|yep|yes|no|done|fine|sahi hai|theek hai|got it|gm|gn|good morning|good night|congrats|congratulations)\b/i.test(lower) && clean.length < 25) {
     return false;
   }
 
-  // 3. Question interrogatives (English + Hindi / Hinglish anywhere in sentence)
   const questionWords = /\b(what|how|when|where|who|whom|whose|why|which|can|could|would|should|is|are|does|do|did|will|shall|anyone|anybody|someone|somebody|kaun|kon|kya|kab|kaise|kaisa|kaisi|kesa|kesi|kese|kyun|kyu|kaha|kahan|kahape|kidhar|kidhr|kitna|kitne|kitni|konsa|konsi|konse|kaunsa|kaunsi|kisme|kisko|kisne|batao|bata|bataiye|btao|pata|scene)\b/i;
   if (questionWords.test(lower)) return true;
 
-  // 4. Inquiring phrases & requests (e.g. "tell me about", "anyone knows", "need help with", "h kya")
   const inquiringPhrases = /\b(tell me|tell us|guide me|guide on|help with|help regarding|any update|any idea|any info|need info|need notes|need help|pls share|please share|share link|how to|where to|details on|info on|doubt in|doubt on|confused about|queries regarding|kisi ko|koi bata|bata do|bata dena|btao na|h kya|hai kya|hein kya|pata hai kya|pata h kya|kaisa h|kaisa hai|mil sakta hai|milega kya|ho sakta hai)\b/i;
   if (inquiringPhrases.test(lower)) return true;
 
-  // 5. Campus keywords paired with inquiry context (e.g. "Pushkar sir cabin", "ICP syllabus")
   const campusKeywords = /\b(pushkar|anshuman|sharma|mehta|prof|professor|sir|maam|mam|faculty|mentor|bsm|icp|dsa|math|cs|ai|pdc|cgr|gpa|attendance|assignment|deadline|submission|exam|midterm|endsem|hall ticket|portal|dashboard|hostel|mess|wifi|lan|internship|placement|gsoc|sil|bits|iitm|iit madras|shark tank|syllabus|grading|criteria|policy|exemption|leave)\b/i;
   const queryModifiers = /\b(timing|schedule|syllabus|grading|cabin|contact|room|venue|date|time|link|process|rules|requirement|criteria|review|rating|format|pattern|difficulty|tough|easy|strict|chill|extension|portal|office)\b/i;
 
@@ -164,8 +110,6 @@ function detectQuestionIntent(text) {
   return false;
 }
 
-// ── Smart heuristic fallback ──────────────────────────────────────────────────
-
 function isHeuristicValidQAPair(question, answer) {
   const qLower = question.toLowerCase().trim();
   const aLower = answer.toLowerCase().trim();
@@ -174,26 +118,20 @@ function isHeuristicValidQAPair(question, answer) {
     return false;
   }
 
-  // Answer cannot be just a repetition of the question or a question itself
   if (qLower === aLower) return false;
   if (detectQuestionIntent(answer) && aLower.length < 35) return false;
 
   const isQuestion = detectQuestionIntent(question);
-
-  // Reject generic conversational noise
   const noisePattern = /^(ok|okay|k|thanks|thank you|ty|thx|lol|lmao|haha|nice|cool|yep|yes|no|done|fine|sahi hai|theek hai|got it)\b/i;
   const isNoise = noisePattern.test(aLower) && aLower.length < 25;
 
   return isQuestion && !isNoise;
 }
 
-// ── LLM Quality Filter ────────────────────────────────────────────────────────
-
 async function isValidQAPair(question, answer) {
   const qTrim = question.trim();
   const aTrim = answer.trim();
 
-  // Basic sanity check: answer cannot just be the same question or a short query
   if (qTrim.toLowerCase() === aTrim.toLowerCase()) return false;
   if (aTrim.endsWith("?") && aTrim.length < 35) return false;
 
@@ -210,7 +148,6 @@ Criteria:
 
 Respond with EXACTLY the single word: YES or NO.`;
 
-  // 1. Try Gemini 3.1 Flash Lite / Flash first (multilingual + high quota)
   if (CONFIG.GEMINI_API_KEY) {
     for (const model of ["gemini-3.1-flash-lite", "gemini-3.6-flash"]) {
       try {
@@ -230,13 +167,10 @@ Respond with EXACTLY the single word: YES or NO.`;
           if (text === "YES" || text.startsWith("YES")) return true;
           if (text === "NO" || text.startsWith("NO")) return false;
         }
-      } catch (err) {
-        // Fallback
-      }
+      } catch (err) {}
     }
   }
 
-  // 2. Try Groq (groq/compound-mini - ultra-fast binary output)
   if (CONFIG.GROQ_API_KEY) {
     try {
       const res = await fetchWithTimeout("https://api.groq.com/openai/v1/chat/completions", {
@@ -269,19 +203,13 @@ Respond with EXACTLY the single word: YES or NO.`;
     }
   }
 
-  // 3. Smart Heuristic Fallback
   const heuristicResult = isHeuristicValidQAPair(qTrim, aTrim);
   log(`QA verdict (Heuristic): ${heuristicResult ? "YES" : "NO"} | Q: "${qTrim.slice(0, 40)}" | A: "${aTrim.slice(0, 40)}"`);
   return heuristicResult;
 }
 
-// ── Course tag extraction ──────────────────────────────────────────────────────
-// Tries to extract a course code from the message text (e.g. CS301, ICP101)
-
-// ── Recent questions tracker for unquoted conversation capture ───────────────
-// Maps group jid -> array of { text, sender, key, timestamp } (expires after 5 mins)
 const recentGroupQuestions = new Map();
-const QUESTION_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
+const QUESTION_EXPIRY_MS = 5 * 60 * 1000;
 
 function recordRecentQuestion(jid, text, sender, key) {
   if (!recentGroupQuestions.has(jid)) {
@@ -289,10 +217,8 @@ function recordRecentQuestion(jid, text, sender, key) {
   }
   const list = recentGroupQuestions.get(jid);
   const now = Date.now();
-  // Filter out expired entries
   const fresh = list.filter((q) => now - q.timestamp < QUESTION_EXPIRY_MS);
   fresh.push({ text, sender, key, timestamp: now });
-  // Keep max 5 most recent
   recentGroupQuestions.set(jid, fresh.slice(-5));
 }
 
@@ -312,8 +238,6 @@ function removeRecentQuestion(jid, text) {
   const remaining = list.filter((q) => q.text.trim().toLowerCase() !== text.trim().toLowerCase());
   recentGroupQuestions.set(jid, remaining);
 }
-
-// ── Reaction helper ──────────────────────────────────────────────────────────
 
 async function sendGhostReaction(sock, jid, msgKey) {
   try {
@@ -336,8 +260,6 @@ async function sendGhostReaction(sock, jid, msgKey) {
   }
 }
 
-// ── Check existing Echoes & get synthesis ──────────────────────────────────────
-
 async function searchEchoSynthesis(query) {
   try {
     const res = await fetchWithTimeout(`${CONFIG.FLASK_URL}/search`, {
@@ -351,7 +273,6 @@ async function searchEchoSynthesis(query) {
 
     if (data.result_count > 0 && data.synthesis && data.synthesis.answer) {
       const ans = data.synthesis.answer.trim();
-      // Ignore fallback messages that say no memories exist
       if (ans.toLowerCase().includes("no seniors have shared memories") ||
           ans.toLowerCase().includes("no matching echoes found")) {
         return null;
@@ -371,7 +292,6 @@ async function searchEchoSynthesis(query) {
   }
 }
 
-// ── Group names cache ────────────────────────────────────────────────────────
 const groupNamesCache = new Map();
 
 async function getGroupName(sock, jid) {
@@ -386,13 +306,9 @@ async function getGroupName(sock, jid) {
   }
 }
 
-// ── Course tag extraction ──────────────────────────────────────────────────────
-// Tries to extract a course code from the message text (e.g. CS301, ICP101)
-
 function extractCourseTag(text) {
   const match = text.match(/\b([A-Z]{2,6}\s*\d{2,4})\b/i);
   if (match) return match[1].toUpperCase().replace(/\s+/, "");
-  // Keyword-based fallback
   const keywords = [
     ["exam", "exams"],
     ["lab"],
@@ -410,8 +326,6 @@ function extractCourseTag(text) {
   }
   return "general";
 }
-
-// ── POST to Flask backend (with Cross-Group Tagging & Deduplication) ───────────
 
 async function saveToEcho(question, answer, groupName = "") {
   const courseTag = extractCourseTag(question + " " + answer);
@@ -447,8 +361,6 @@ async function saveToEcho(question, answer, groupName = "") {
   }
 }
 
-// ── Silent Confirmation (+1, 👍, vouch helper) ───────────────────────────────
-
 async function confirmEcho(queryOrId, groupName = "") {
   try {
     const payload =
@@ -473,13 +385,10 @@ async function confirmEcho(queryOrId, groupName = "") {
   return null;
 }
 
-// ── Universal Message Content Extractor (Handles Ephemeral, ViewOnce, Community Sub-Groups) ──
-
 function extractMessageContent(rawMsg) {
   if (!rawMsg) return { text: "", quotedMsg: null, quotedId: null, quotedParticipant: null };
 
   let m = rawMsg;
-  // Unwrap nested WhatsApp wrappers (ephemeral disappearing messages, view once, document captions)
   while (m?.ephemeralMessage || m?.viewOnceMessage || m?.viewOnceMessageV2 || m?.documentWithCaptionMessage) {
     m = m.ephemeralMessage?.message ||
         m.viewOnceMessage?.message ||
@@ -513,8 +422,6 @@ function extractMessageContent(rawMsg) {
 
   return { text, quotedMsg, quotedId, quotedParticipant };
 }
-
-// ── Lightweight HTTP Server for QR viewing (if port available) ─────────────────
 
 let _activeQrString = null;
 let _httpServerStarted = false;
@@ -563,8 +470,6 @@ function ensureQrServer() {
   }
 }
 
-// ── Main bot ──────────────────────────────────────────────────────────────────
-
 async function startBot() {
   ensureQrServer();
 
@@ -580,10 +485,8 @@ async function startBot() {
     getMessage: async () => ({ conversation: "" }),
   });
 
-  // Save credentials on update
   sock.ev.on("creds.update", saveCreds);
 
-  // Optional: Pairing Code authentication (no QR camera needed!)
   if (!sock.authState.creds.registered && CONFIG.PHONE_NUMBER) {
     const cleanNumber = CONFIG.PHONE_NUMBER.replace(/[^0-9]/g, "");
     if (cleanNumber.length >= 10) {
@@ -605,7 +508,6 @@ async function startBot() {
     }
   }
 
-  // Handle connection updates
   sock.ev.on("connection.update", ({ connection, lastDisconnect, qr }) => {
     if (qr) {
       _activeQrString = qr;
@@ -620,7 +522,6 @@ async function startBot() {
       }
       log("=======================================================\n");
 
-      // Also sync to Flask backend
       fetchWithTimeout(`${CONFIG.FLASK_URL}/api/bot/qr`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -642,7 +543,6 @@ async function startBot() {
       log(`Pointer replies: ${CONFIG.ENABLE_POINTER_REPLIES ? "enabled" : "disabled"}`);
       log("=======================================================\n");
 
-      // Sync connected status to Flask backend
       fetchWithTimeout(`${CONFIG.FLASK_URL}/api/bot/qr`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -651,7 +551,6 @@ async function startBot() {
     }
   });
 
-  // ── Reaction listener (Silent Confidence Capture from 👍, ❤️, 💯, 👏, 🔥) ───
   sock.ev.on("messages.reaction", async (reactions) => {
     try {
       for (const r of reactions) {
@@ -675,26 +574,22 @@ async function startBot() {
     }
   });
 
-  // Handle incoming messages
   sock.ev.on("messages.upsert", async ({ messages, type }) => {
     if (type !== "notify") return;
 
     for (const msg of messages) {
       try {
-        // Skip own messages, broadcasts, status updates
         if (msg.key.fromMe) continue;
-        if (!isJidGroup(msg.key.remoteJid)) continue;  // only listen in groups
+        if (!isJidGroup(msg.key.remoteJid)) continue;
 
         const jid   = msg.key.remoteJid;
         const senderId = msg.key.participant || jid;
         const groupName = await getGroupName(sock, jid);
 
-        // Extract text content (handles community sub-groups, ephemeral, view-once, etc.)
         const { text: cleanText, quotedMsg, quotedId, quotedParticipant } = extractMessageContent(msg.message);
 
         if (!cleanText || cleanText.length < 2) continue;
 
-        // ── Flow 0: Silent Confirmation (+1, same, agreed, vouch, this, fr) ────
         const isConfirmation =
           /^((\+1|same|true|agreed|vouch|this|fr|yes this|valid|confirmed|seconded|upvote|\+100|yep|definitely))\b/i.test(cleanText) &&
           cleanText.length < 25;
@@ -720,7 +615,6 @@ async function startBot() {
 
         const isQuestion = detectQuestionIntent(cleanText);
 
-        // ── Flow 1: Explicit Quoted Reply ──────────────────────────────────────
         if (quotedMsg && quotedId && !isConfirmation) {
           const question = (
             quotedMsg.conversation ||
@@ -740,9 +634,7 @@ async function startBot() {
               log("  -> Valid! Saving to Echo...");
               const echoId = await saveToEcho(question, answer, groupName);
               if (echoId) {
-                // React 👻 to the answer message
                 await sendGhostReaction(sock, jid, msg.key);
-                // Also react to the quoted question
                 if (quotedId) {
                   await sendGhostReaction(sock, jid, {
                     remoteJid: jid,
@@ -760,12 +652,10 @@ async function startBot() {
           }
         }
 
-        // ── Flow 2: Implicit Sequential Answer (answered without clicking reply) ─
         if (!quotedMsg && !isQuestion && !isConfirmation && cleanText.length >= CONFIG.MIN_ANSWER_LEN) {
           const pendingQuestions = getRecentQuestions(jid, senderId);
           let capturedImplicit = false;
 
-          // Check newest to oldest pending question
           for (let i = pendingQuestions.length - 1; i >= 0; i--) {
             const candidateQ = pendingQuestions[i];
             log(`\n[Checking Sequential Candidate in "${groupName}"]`);
@@ -777,7 +667,6 @@ async function startBot() {
               log("  -> Valid sequential Q&A match! Saving to Echo...");
               const echoId = await saveToEcho(candidateQ.text, cleanText, groupName);
               if (echoId) {
-                // React 👻 on both the answer and the original question
                 await sendGhostReaction(sock, jid, msg.key);
                 await sendGhostReaction(sock, jid, candidateQ.key);
                 removeRecentQuestion(jid, candidateQ.text);
@@ -790,15 +679,10 @@ async function startBot() {
           if (capturedImplicit) continue;
         }
 
-        // ── Flow 3: Question Handling & Rich Pointer Auto-Replies ──────────────
         if (isQuestion) {
-          // Record as recent question for sequential matching
           recordRecentQuestion(jid, cleanText, senderId, msg.key);
 
           if (CONFIG.ENABLE_POINTER_REPLIES) {
-            // Cooldown key = sender + question fingerprint (first 40 chars)
-            // This lets the same person ask DIFFERENT questions without being blocked.
-            // Only the exact same question from the same person is rate-limited.
             const questionFingerprint = `${senderId}::${cleanText.slice(0, 40).toLowerCase().replace(/\s+/g, ' ')}`;
             const lastReply = autoReplyCooldowns.get(questionFingerprint);
             if (lastReply && Date.now() - lastReply < CONFIG.AUTO_REPLY_COOLDOWN_MS) {
@@ -806,7 +690,6 @@ async function startBot() {
               continue;
             }
 
-            // Search Echo for synthesized answer
             const searchResult = await searchEchoSynthesis(cleanText);
             if (searchResult && searchResult.answer) {
               try {
@@ -818,14 +701,12 @@ async function startBot() {
                   `🔗 *Read more & see sources:*\n${searchResult.url}`;
 
                 try {
-                  // 1. Try sending directly into the group
                   await sock.sendMessage(jid, {
                     text: formattedReply,
                     quoted: msg,
                   });
                   log(`Auto-reply sent for question in "${groupName}": "${cleanText.slice(0, 60)}"`);
                 } catch (groupSendErr) {
-                  // 2. If group is an Announcement Channel / locked, send via DM
                   if (senderId && senderId !== jid) {
                     const dmReply =
                       `👻 *Echo — Answer to your question in ${groupName}:*\n\n` +
@@ -842,13 +723,11 @@ async function startBot() {
                 warn("Auto-reply error:", replyErr.message);
               }
             } else {
-              // No answer found — log as knowledge gap so you can spot gaps in Railway logs
               log(`[Knowledge Gap] No Echo answer for: "${cleanText.slice(0, 80)}" in "${groupName}"`);
             }
           }
         }
 
-        // ── Flow 4: Auto-capture Campus Announcements & Official Notices ───────
         if (!isQuestion && !quotedMsg && !isConfirmation && cleanText.length >= 35) {
           const isAnnouncement =
             /\b(announcement|notice|important|deadline|extended|rescheduled|postponed|schedule|exam|quiz|submission|hall ticket|attendance|exemption|portal|registration|session|class|timing|room|venue|instructions)\b/i.test(cleanText);
@@ -873,11 +752,7 @@ async function startBot() {
   });
 }
 
-// ── Start ──────────────────────────────────────────────────────────────────────
-
 startBot().catch((err) => {
   console.error("[EchoBot] Fatal error:", err);
   process.exit(1);
 });
-
-

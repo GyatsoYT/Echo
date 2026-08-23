@@ -1,10 +1,3 @@
-/**
- * ECHO — Campus Knowledge Base UI
- * Functional application scripts: alerts, forms, audio player, filters, trust votes, animations.
- */
-
-// ── Alert Notification ───────────────────────────────────────────────────────
-
 function showAlert(message, type = 'info', container = null) {
   const icons = { success: '✓', error: '✕', info: 'ℹ', warning: '⚠' };
   const div = document.createElement('div');
@@ -20,8 +13,6 @@ function showAlert(message, type = 'info', container = null) {
     setTimeout(() => div.remove(), 200);
   }, 5000);
 }
-
-// ── Scroll-Reveal Animations with Staggering ──────────────────────────────────
 
 function initScrollReveal() {
   const revealElements = document.querySelectorAll('.reveal-on-scroll, .step-card, .ghost-card');
@@ -44,8 +35,6 @@ function initScrollReveal() {
   revealElements.forEach(el => observer.observe(el));
 }
 
-// ── Counter Animations ───────────────────────────────────────────────────────
-
 function animateCounters() {
   const counters = document.querySelectorAll('.stat-num[data-count], .stat-val[data-count], .stat-value[data-count]');
   if (!counters.length) return;
@@ -57,13 +46,12 @@ function animateCounters() {
         const target = parseInt(el.dataset.count, 10);
         if (isNaN(target) || target === 0) return;
 
-        let start = 0;
         const duration = 1000;
         const startTime = performance.now();
 
         const updateCount = (now) => {
           const progress = Math.min((now - startTime) / duration, 1);
-          const ease = 1 - Math.pow(1 - progress, 3); // cubic ease-out
+          const ease = 1 - Math.pow(1 - progress, 3);
           el.textContent = Math.floor(ease * target);
           if (progress < 1) {
             requestAnimationFrame(updateCount);
@@ -80,8 +68,6 @@ function animateCounters() {
 
   counters.forEach(c => observer.observe(c));
 }
-
-// ── Search Scanning Step Sequence (Ask Tab) ──────────────────────────────────
 
 function initSearchScanning() {
   const searchForm = document.getElementById('search-form');
@@ -113,8 +99,6 @@ function initSearchScanning() {
     });
   });
 }
-
-// ── Echoes Archive Page: Live Search, Filter Pills & View Switcher ───────────
 
 function initEchoesArchive() {
   const grid = document.getElementById('echoes-grid');
@@ -165,7 +149,6 @@ function initEchoesArchive() {
     });
   }
 
-  // Live Search Input
   if (liveSearch) {
     liveSearch.addEventListener('input', (e) => {
       currentSearch = e.target.value.toLowerCase().trim();
@@ -173,7 +156,6 @@ function initEchoesArchive() {
     });
   }
 
-  // Filter Pills
   filterPills.forEach(pill => {
     pill.addEventListener('click', () => {
       filterPills.forEach(p => p.classList.remove('active'));
@@ -183,7 +165,6 @@ function initEchoesArchive() {
     });
   });
 
-  // Sort Tabs
   sortBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       sortBtns.forEach(b => b.classList.remove('active'));
@@ -200,7 +181,6 @@ function initEchoesArchive() {
     });
   });
 
-  // View Mode Switcher
   if (viewGridBtn && viewListBtn) {
     viewGridBtn.addEventListener('click', () => {
       viewGridBtn.classList.add('active');
@@ -215,7 +195,6 @@ function initEchoesArchive() {
     });
   }
 
-  // Expand / Collapse Full Transcripts
   document.querySelectorAll('.expand-text-btn, .expand-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const teaserId = btn.dataset.targetTeaser;
@@ -244,8 +223,6 @@ function initEchoesArchive() {
     });
   });
 }
-
-// ── Gaps Interactive Toolbar & Filter ────────────────────────────────────────
 
 function initGapsFilter() {
   const filterBtns = document.querySelectorAll('.gaps-filter-btn');
@@ -292,8 +269,6 @@ function initGapsFilter() {
     });
   }
 }
-
-// ── Global Audio Player with Equalizer Animation ─────────────────────────────
 
 let currentPlayingAudio = null;
 let currentPlayingBtn = null;
@@ -357,8 +332,6 @@ function initAudioPlayers() {
   });
 }
 
-// ── Record Form Handler ──────────────────────────────────────────────────────
-
 function initRecordForm() {
   const form = document.getElementById('echo-form');
   if (!form) return;
@@ -404,7 +377,6 @@ function initRecordForm() {
         showAlert('A similar Echo exists — confirmation count increased.', 'info');
         setTimeout(() => { window.location.href = '/echoes'; }, 1200);
       } else if (data.status === 'needs_transcript') {
-        // Whisper failed — prompt user to type manually
         showAlert('⚠️ Audio transcription failed. Please type your advice below and resubmit.', 'warning');
         const transcriptArea = document.getElementById('transcript');
         if (transcriptArea) {
@@ -413,7 +385,6 @@ function initRecordForm() {
           transcriptArea.style.borderColor = 'rgba(229, 169, 82, 0.6)';
           transcriptArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
-        // Store audio path for resubmit
         if (data.audio_path) {
           form.dataset.audioCached = data.audio_path;
         }
@@ -428,8 +399,6 @@ function initRecordForm() {
     }
   });
 }
-
-// ── Trust Votes (Helpful / Not Helpful) ──────────────────────────────────────
 
 function initTrustVotes() {
   document.querySelectorAll('.trust-btn').forEach(btn => {
@@ -460,8 +429,6 @@ function initTrustVotes() {
   });
 }
 
-// ── Dev Seed Button ─────────────────────────────────────────────────────────
-
 function initSeedButton() {
   const btn = document.getElementById('seed-btn');
   if (!btn) return;
@@ -483,8 +450,6 @@ function initSeedButton() {
   });
 }
 
-// ── Category picker (record page) ─────────────────────────────────────────────
-
 function initCategoryPicker() {
   const picker = document.getElementById('category-picker');
   if (!picker) return;
@@ -499,14 +464,11 @@ function initCategoryPicker() {
     });
   });
 
-  // Pre-select from URL param ?topic=...
   const urlTopic = new URLSearchParams(window.location.search).get('topic');
   if (urlTopic && topicInput) {
     topicInput.value = urlTopic;
   }
 }
-
-// ── Recording UI enhancements ─────────────────────────────────────────────────
 
 function initRecordingUI() {
   const recordBtn = document.getElementById('record-btn');
@@ -515,7 +477,6 @@ function initRecordingUI() {
 
   if (!recordBtn || !equalizer) return;
 
-  // Watch for the .recording class being added by recorder.js
   const observer = new MutationObserver(() => {
     if (recordBtn.classList.contains('recording')) {
       equalizer.classList.add('active');
@@ -528,8 +489,6 @@ function initRecordingUI() {
 
   observer.observe(recordBtn, { attributes: true, attributeFilter: ['class'] });
 }
-
-// ── Live Feed: poll for new WhatsApp echoes ───────────────────────────────────
 
 let _liveFeedLastId = null;
 
@@ -569,16 +528,12 @@ function initLiveFeed() {
           }
         }
       }
-    } catch (e) {
-      // Silently ignore network errors
-    }
+    } catch (e) {}
   }
 
   checkFeed();
   setInterval(checkFeed, 8000);
 }
-
-// ── Re-verify stale Echo button ───────────────────────────────────────────────
 
 function initReverifyButtons() {
   document.querySelectorAll('.reverify-btn').forEach(btn => {
@@ -621,8 +576,6 @@ function initReverifyButtons() {
   });
 }
 
-// ── Bootstrap ────────────────────────────────────────────────────────────────
-
 document.addEventListener('DOMContentLoaded', () => {
   initScrollReveal();
   animateCounters();
@@ -638,7 +591,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initLiveFeed();
   initReverifyButtons();
 
-  // Echo counter on search page
   const echoCountEl = document.getElementById('echo-count-display');
   if (echoCountEl) {
     const n = parseInt(echoCountEl.textContent, 10);
@@ -652,7 +604,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Mark high-match result cards for green badge coloring
   document.querySelectorAll('.ghost-result-card').forEach(card => {
     const badge = card.querySelector('.match-score-badge');
     if (badge) {
@@ -663,13 +614,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Flash live preview card on transcript update
   const transcriptArea = document.getElementById('transcript');
   const previewCard = document.querySelector('.preview-echo-card');
   if (transcriptArea && previewCard) {
     transcriptArea.addEventListener('input', () => {
       previewCard.classList.remove('updated');
-      void previewCard.offsetWidth; // force reflow to restart animation
+      void previewCard.offsetWidth;
       previewCard.classList.add('updated');
     });
   }

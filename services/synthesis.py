@@ -1,29 +1,7 @@
-"""
-services/synthesis.py
-----------------------
-"Ask the Batch" — synthesises a single answer from multiple matching Echoes
-using Gemini 3.6 Flash / Groq LLM. Falls back to a structured template if the
-API is unavailable (venue wifi, rate limits, etc.).
-
-Usage:
-    from services.synthesis import ask_the_batch
-    answer = ask_the_batch(
-        question="Which professor gives the hardest midterm?",
-        echoes=[echo1, echo2, echo3]   # dicts with "transcript", "course_tag", etc.
-    )
-    # Returns a dict with "answer", "source", "echo_count"
-"""
-
+import re
 from config import Config
 
-
-# ── Template fallback ───────────────────────────────────────────────────────
-
 def _template_synthesis(question: str, echoes: list[dict]) -> str:
-    """
-    Generate a structured summary without any API call.
-    Always works, even with zero connectivity.
-    """
     n = len(echoes)
     top = echoes[0]["transcript"][:300].strip()
     others = []
@@ -45,25 +23,7 @@ def _template_synthesis(question: str, echoes: list[dict]) -> str:
 
     return "\n".join(lines)
 
-
-# ── LLM synthesis ───────────────────────────────────────────────────────────
-
 def ask_the_batch(question: str, echoes: list[dict]) -> dict:
-    """
-    Synthesise a single conversational answer from multiple matching Echoes.
-
-    Args:
-        question: The junior's original search query.
-        echoes:   List of echo dicts (already filtered + sorted by similarity).
-                  Expected keys: transcript, course_tag, professor_tag, topic_tag,
-                                 created_at, confirmations, similarity.
-
-    Returns:
-        dict with:
-          - "answer": str   — the synthesised text
-          - "source": str   — "llm" | "template"
-          - "echo_count": int
-    """
     if not echoes:
         return {
             "answer": "No matching Echoes found. Be the first to leave one!",
@@ -71,11 +31,9 @@ def ask_the_batch(question: str, echoes: list[dict]) -> dict:
             "echo_count": 0,
         }
 
-    # Limit to top N echoes
     top_echoes = echoes[:Config.ASK_BATCH_MAX_CONTEXTS]
     n = len(top_echoes)
 
-    # Build context block
     context_parts = []
     for i, e in enumerate(top_echoes, 1):
         tags = f"[{e.get('course_tag', '?')} | {e.get('topic_tag', '?')}]"
@@ -97,7 +55,6 @@ Instructions:
 3. Language & Tone: Match the language of the student's question naturally (English, Hinglish, or Hindi). If asked in Hinglish (e.g. "teacher kaun hai", "attendance kitni chahiye"), reply in natural, clear Hinglish or English.
 4. Be direct, practical, and factual to the provided memories only. Do not hallucinate external facts."""
 
-    # 1. Try Groq LLM first (ultra-fast sub-second response ~300ms)
     if Config.GROQ_API_KEY:
         try:
             from groq import Groq
@@ -109,15 +66,12 @@ Instructions:
                 temperature=0.3,
             )
             raw_answer = response.choices[0].message.content.strip()
-            # Clean think tags if any
-            import re
             clean_answer = re.sub(r"<think>[\s\S]*?(<\/think>|$)", "", raw_answer, flags=re.IGNORECASE).strip()
             if clean_answer:
                 return {"answer": clean_answer, "source": "llm", "echo_count": n}
         except Exception as exc:
             print(f"[Synthesis] Groq LLM failed: {exc}")
 
-    # 2. Try Gemini (multilingual fallback)
     if Config.GEMINI_API_KEY:
         for model in ["gemini-3.1-flash-lite", "gemini-3.6-flash"]:
             try:
@@ -132,7 +86,5 @@ Instructions:
             except Exception as exc:
                 print(f"[Synthesis] Gemini LLM ({model}) failed: {exc}")
 
-    # 3. Template fallback (pure offline math & formatting)
     answer = _template_synthesis(question, top_echoes)
     return {"answer": answer, "source": "template", "echo_count": n}
-

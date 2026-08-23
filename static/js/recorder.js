@@ -1,28 +1,15 @@
-/**
- * recorder.js — MediaRecorder-based audio capture for Echo
- *
- * Robust rewrite with:
- *  - Proper state machine (idle → recording → stopped)
- *  - Permission denial UX
- *  - Pulse ring + equalizer control
- *  - Correct blob attachment for form submission
- */
-
 const EchoRecorder = (() => {
-  // ── State ────────────────────────────────────────────────────────────────
   let mediaRecorder = null;
   let chunks = [];
   let stream = null;
   let recordedBlob = null;
   let timerInterval = null;
   let seconds = 0;
-  let state = 'idle'; // idle | recording | stopped
+  let state = 'idle';
 
-  // ── DOM refs (populated on init) ─────────────────────────────────────────
   let recordBtn, statusEl, previewEl, timerEl;
   let pulseRing, equalizer;
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
   function formatTime(secs) {
     const m = Math.floor(secs / 60).toString().padStart(2, '0');
     const s = (secs % 60).toString().padStart(2, '0');
@@ -76,11 +63,9 @@ const EchoRecorder = (() => {
     }
   }
 
-  // ── Core recording logic ──────────────────────────────────────────────────
   async function startRecording() {
     if (state === 'recording') return;
 
-    // Check MediaRecorder support
     if (typeof MediaRecorder === 'undefined') {
       setStatus('❌ Browser does not support recording. Use Chrome or Firefox.');
       return;
@@ -96,7 +81,6 @@ const EchoRecorder = (() => {
       } else {
         setStatus(`❌ Could not access microphone: ${err.message}`);
       }
-      console.warn('[EchoRecorder] getUserMedia error:', err);
       return;
     }
 
@@ -104,7 +88,6 @@ const EchoRecorder = (() => {
     recordedBlob = null;
     state = 'recording';
 
-    // Pick best supported MIME type
     const mimeType = [
       'audio/webm;codecs=opus',
       'audio/webm',
@@ -116,7 +99,6 @@ const EchoRecorder = (() => {
     try {
       mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
     } catch (err) {
-      console.warn('[EchoRecorder] MediaRecorder init error:', err);
       mediaRecorder = new MediaRecorder(stream);
     }
 
@@ -142,12 +124,11 @@ const EchoRecorder = (() => {
     };
 
     mediaRecorder.onerror = (err) => {
-      console.warn('[EchoRecorder] MediaRecorder error:', err);
       stopRecording();
       setStatus('❌ Recording error. Try again.');
     };
 
-    mediaRecorder.start(200); // collect every 200ms
+    mediaRecorder.start(200);
     startTimer();
     setRecordingUI(true);
     setStatus('🔴 Recording… Click stop when done.', true);
@@ -157,7 +138,7 @@ const EchoRecorder = (() => {
     if (state !== 'recording') return;
 
     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-      try { mediaRecorder.stop(); } catch (e) { /* ignore */ }
+      try { mediaRecorder.stop(); } catch (e) {}
     }
     if (stream) {
       stream.getTracks().forEach(t => t.stop());
@@ -165,26 +146,19 @@ const EchoRecorder = (() => {
     }
 
     stopTimer();
-    // onstop will fire and update UI/state
   }
 
-  // ── Public API ────────────────────────────────────────────────────────────
   function init({ recordBtnId, statusId, previewId, timerId }) {
     recordBtn = document.getElementById(recordBtnId);
     statusEl  = document.getElementById(statusId);
     previewEl = document.getElementById(previewId);
     timerEl   = document.getElementById(timerId);
 
-    // Optional visual elements
     pulseRing = document.getElementById('mic-pulse-ring');
     equalizer = document.getElementById('rec-equalizer');
 
-    if (!recordBtn) {
-      console.warn('[EchoRecorder] Record button not found:', recordBtnId);
-      return;
-    }
+    if (!recordBtn) return;
 
-    // Single, clean click handler
     recordBtn.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -192,7 +166,6 @@ const EchoRecorder = (() => {
       if (state === 'recording') {
         stopRecording();
       } else {
-        // Reset preview if re-recording
         if (previewEl) {
           previewEl.src = '';
           previewEl.classList.add('hidden');
@@ -203,7 +176,6 @@ const EchoRecorder = (() => {
     });
 
     setStatus('Click mic to start recording');
-    console.log('[EchoRecorder] Initialized successfully');
   }
 
   function getBlob() { return recordedBlob; }

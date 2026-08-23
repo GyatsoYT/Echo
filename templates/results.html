@@ -82,17 +82,18 @@
     </div>
 
     <!-- Consensus Agreement Progress Bar -->
+    {% set pct_agree = [((synthesis.echo_count / result_count) * 100) | round | int, 95] | min %}
     <div class="consensus-meter">
       <div class="consensus-track">
         <div
           class="consensus-fill"
           id="consensus-bar-fill"
-          data-pct="{{ [((synthesis.echo_count / result_count) * 100) | round | int, 95] | min }}"
-          style="width: {{ [((synthesis.echo_count / result_count) * 100) | round | int, 95] | min }}%;"
+          data-pct="{{ pct_agree }}"
+          style="--fill-width: {{ pct_agree }}%; width: var(--fill-width, 75%);"
         ></div>
       </div>
       <div class="consensus-meter-labels">
-        <span class="agree-label" id="consensus-agree-pct">{{ [((synthesis.echo_count / result_count) * 100) | round | int, 95] | min }}% senior agreement</span>
+        <span class="agree-label" id="consensus-agree-pct">{{ pct_agree }}% senior agreement</span>
         <span class="meta-label">{{ synthesis.echo_count }} Echoes analysed</span>
       </div>
     </div>

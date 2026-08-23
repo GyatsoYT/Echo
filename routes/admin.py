@@ -1,14 +1,3 @@
-"""
-routes/admin.py
-----------------
-Admin / instructor routes:
-
-GET  /gaps          — Knowledge Gaps view
-GET  /stats         — Dashboard stats (JSON)
-POST /seed          — Seed demo data (dev only)
-GET  /qr/<echo_id>  — Generate QR code for an Echo (JIT Handover)
-"""
-
 import os
 import io
 import json
@@ -19,33 +8,19 @@ from services.memory_health import enrich_echoes_with_health
 
 admin_bp = Blueprint("admin", __name__)
 
-
-# ── Knowledge Gaps view ─────────────────────────────────────────────────────
-
 @admin_bp.route("/gaps", methods=["GET"])
 def knowledge_gaps():
     active_gaps, resolved_gaps = get_knowledge_gaps()
     stats = get_search_stats()
     return render_template("gaps.html", gaps=active_gaps, resolved_gaps=resolved_gaps, stats=stats)
 
-
-# ── Dashboard stats (JSON) ──────────────────────────────────────────────────
-
 @admin_bp.route("/api/stats", methods=["GET"])
 def api_stats():
     stats = get_search_stats()
     return jsonify(stats), 200
 
-
-# ── WhatsApp bot endpoint: POST /api/ghosts ─────────────────────────────────
-
 @admin_bp.route("/api/ghosts", methods=["POST"])
 def api_create_ghost():
-    """
-    JSON endpoint for the Baileys WhatsApp bot.
-    Accepts a Q&A pair captured from WhatsApp and saves it as an Echo.
-    Performs automatic cross-group deduplication.
-    """
     data = request.get_json(force=True, silent=True)
     if not data:
         return jsonify({"error": "Invalid JSON body"}), 400
@@ -66,17 +41,14 @@ def api_create_ghost():
     except Exception as e:
         return jsonify({"error": f"Embedding failed: {str(e)}"}), 500
 
-    # Cross-group deduplication: check if an existing Echo has very high similarity (>= 0.85)
     from routes.echoes import _check_near_duplicate
     dup_id = _check_near_duplicate(embedding, course_tag, threshold=0.85)
     if not dup_id and course_tag.lower() == "general":
-        # Check globally for general advice
         dup_id = _check_near_duplicate(embedding, "general", threshold=0.85)
 
     if dup_id:
         from database.db import increment_confirmation
         stats = increment_confirmation(dup_id, group_name=group_name)
-        print(f"[API] Cross-group duplicate found! Echo #{dup_id} confirmation bumped to {stats['confirmations']} across {stats['group_count']} groups")
         return jsonify({
             "status": "confirmed",
             "echo_id": dup_id,
@@ -101,7 +73,6 @@ def api_create_ghost():
     except Exception as e:
         return jsonify({"error": f"DB insert failed: {str(e)}"}), 500
 
-    print(f"[API] WhatsApp Ghost saved: echo_id={echo_id}, course={course_tag}, source={source}, group={group_name}")
     return jsonify({
         "status": "created",
         "echo_id": echo_id,
@@ -109,15 +80,8 @@ def api_create_ghost():
         "message": "Echo captured from WhatsApp and saved!",
     }), 201
 
-
-# ── Silent Confidence Confirmation: POST /api/ghosts/confirm ────────────────
-
 @admin_bp.route("/api/ghosts/confirm", methods=["POST"])
 def api_confirm_ghost():
-    """
-    Called when users react (👍, +1, "same", "vouch") in WhatsApp.
-    Increments confidence/confirmations and records group participation without needing a new post.
-    """
     data = request.get_json(force=True, silent=True) or {}
     echo_id = data.get("echo_id")
     group_name = data.get("group_name", "")
@@ -129,7 +93,6 @@ def api_confirm_ghost():
     if echo_id:
         target_id = int(echo_id)
     elif query:
-        # Match nearest echo
         from services.search import semantic_search
         matches = semantic_search(query, threshold=0.75, top_k=1, log=False)
         if matches:
@@ -139,7 +102,6 @@ def api_confirm_ghost():
         return jsonify({"status": "not_found", "message": "No matching Echo found to confirm"}), 404
 
     stats = increment_confirmation(target_id, group_name=group_name)
-    print(f"[API] Silent confidence confirmation recorded for Echo #{target_id} (+1 from {group_name or 'group'})")
 
     return jsonify({
         "status": "confirmed",
@@ -150,12 +112,8 @@ def api_confirm_ghost():
         "message": "Silent confirmation recorded!",
     }), 200
 
-
-# ── 1-Click Web Re-verification: POST /api/echoes/<id>/reverify ──────────────
-
 @admin_bp.route("/api/echoes/<int:echo_id>/reverify", methods=["POST"])
 def api_reverify_echo(echo_id):
-    """Allows students/seniors on the site to mark an older Echo as 'Still True' with 1 click."""
     from database.db import increment_confirmation, get_echo_by_id
     from services.memory_health import compute_health
 
@@ -174,12 +132,8 @@ def api_reverify_echo(echo_id):
         "message": "Marked as Still True! Freshness restored.",
     }), 200
 
-
-# ── Recent echoes feed (for live UI polling) ────────────────────────────────
-
 @admin_bp.route("/api/echoes/recent", methods=["GET"])
 def api_recent_echoes():
-    """Returns the 10 most recently added echoes (for live feed on the website)."""
     echoes = get_all_echoes()
     recent = []
     from services.memory_health import compute_health
@@ -200,19 +154,14 @@ def api_recent_echoes():
         })
     return jsonify(recent), 200
 
-
-# ── Bot Live QR Sync & Web Viewer ──────────────────────────────────────────
-
 _BOT_STATE = {
     "qr": None,
     "status": "waiting",
     "updated_at": None,
 }
 
-
 @admin_bp.route("/api/bot/qr", methods=["POST"])
 def api_receive_bot_qr():
-    """Receives live QR code string or status update from the WhatsApp bot."""
     data = request.get_json(force=True, silent=True) or {}
     _BOT_STATE["qr"] = data.get("qr")
     _BOT_STATE["status"] = data.get("status", "waiting")
@@ -220,14 +169,11 @@ def api_receive_bot_qr():
     _BOT_STATE["updated_at"] = datetime.now().strftime("%H:%M:%S")
     return jsonify({"status": "received"}), 200
 
-
 @admin_bp.route("/api/bot/qr/image", methods=["GET"])
 def bot_qr_image():
-    """Generate and stream a high-res PNG image of the active WhatsApp bot QR."""
     import qrcode
     qr_str = _BOT_STATE.get("qr")
     if not qr_str:
-        # Generate placeholder
         qr_str = "https://github.com"
 
     qr = qrcode.QRCode(
@@ -245,10 +191,8 @@ def bot_qr_image():
     buf.seek(0)
     return send_file(buf, mimetype="image/png")
 
-
 @admin_bp.route("/bot/qr", methods=["GET"])
 def view_bot_qr():
-    """Web page displaying the active WhatsApp bot QR code with auto-refresh."""
     return render_template(
         "bot_qr.html",
         has_qr=bool(_BOT_STATE.get("qr")),
@@ -256,17 +200,12 @@ def view_bot_qr():
         updated_at=_BOT_STATE.get("updated_at", "Just now"),
     )
 
-
-# ── QR Code generation (JIT Handover) ──────────────────────────────────────
-
 @admin_bp.route("/qr/<int:echo_id>", methods=["GET"])
 def generate_qr(echo_id):
-    """Generate a QR code image for a specific Echo."""
     try:
         import qrcode
         from qrcode.image.pil import PilImage
 
-        # Build the URL for this Echo
         host = request.host_url.rstrip("/")
         echo_url = f"{host}/echoes/{echo_id}"
 
@@ -288,9 +227,6 @@ def generate_qr(echo_id):
                          download_name=f"sst_echo_{echo_id}_qr.png")
     except ImportError:
         return jsonify({"error": "qrcode package not installed. Run: pip install qrcode[pil]"}), 500
-
-
-# ── Seed demo data (SST Real-World Knowledge) ───────────────────────────────
 
 SEED_DATA = [
     {
@@ -367,19 +303,15 @@ SEED_DATA = [
     }
 ]
 
-
 @admin_bp.route("/seed", methods=["POST"])
 def seed_data():
-    """Seed the database with authentic SST demo Echoes. Dev/demo use only."""
     inserted = 0
     skipped = 0
 
-    # Clear old generic echoes and searches if requested or re-seed cleanly
     with get_db() as conn:
         conn.execute("DELETE FROM echoes")
         conn.execute("DELETE FROM searches")
 
-    # Add realistic initial searches so Gaps Radar is pre-populated with SST student queries
     INITIAL_SEARCHES = [
         ("How to balance IIT Madras BS assignments with SST project sprints?", 0.94),
         ("GPU cluster access and PyTorch setup in SIL Innovation Lab", 0.90),
@@ -388,10 +320,10 @@ def seed_data():
         ("Best strategy for 2 Crore seed funding in AI and Business track", 0.88),
         ("How to get selected for Apple Academy in Bali as an SST student?", 0.89),
         ("How to prepare for Smart India Hackathon with Team AntarDrishti?", 0.85),
-        ("Can we get proxy attendance from Batch Success Managers for hackathons?", 0.0),  # Active Gap!
-        ("How to connect external microcontrollers to hostel LAN?", 0.0),                  # Active Gap!
-        ("Which electives in IIT Madras BS have the lowest grading curves?", 0.0),         # Active Gap!
-        ("How does the 404 Media Club select camera crew and podcast hosts?", 0.0),        # Active Gap!
+        ("Can we get proxy attendance from Batch Success Managers for hackathons?", 0.0),
+        ("How to connect external microcontrollers to hostel LAN?", 0.0),
+        ("Which electives in IIT Madras BS have the lowest grading curves?", 0.0),
+        ("How does the 404 Media Club select camera crew and podcast hosts?", 0.0),
     ]
 
     with get_db() as conn:
@@ -407,12 +339,11 @@ def seed_data():
                 professor_tag=item.get("professor_tag", ""),
                 topic_tag=item.get("topic_tag", ""),
                 transcript=transcript,
-                audio_path="",  # No audio for seed data
+                audio_path="",
                 embedding=embedding,
             )
             inserted += 1
-        except Exception as e:
-            print(f"[Seed] Failed to insert echo: {e}")
+        except Exception:
             skipped += 1
 
     return jsonify({
