@@ -37,6 +37,12 @@ def create_app() -> Flask:
     app.register_blueprint(search_bp)
     app.register_blueprint(admin_bp)
 
+    # ── Audio file serving (supports custom persistent volume /data/audio) ──
+    @app.route("/static/audio/<path:filename>")
+    def serve_audio(filename):
+        from flask import send_from_directory
+        return send_from_directory(Config.UPLOAD_FOLDER, filename)
+
     # ── Root route ──────────────────────────────────────────────────────────
     @app.route("/")
     def index():

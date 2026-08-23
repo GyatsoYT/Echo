@@ -13,6 +13,7 @@ Usage:
 
 import math
 import hashlib
+from functools import lru_cache
 from collections import Counter
 from config import Config
 
@@ -40,20 +41,11 @@ def _fallback_embed(text: str) -> list[float]:
 
 # ── Gemini embedding ────────────────────────────────────────────────────────
 
-def embed_text(text: str) -> list[float]:
-    """
-    Embed a text string using Gemini's embedding model.
-    Falls back to _fallback_embed if the API call fails.
-
-    Args:
-        text: The text to embed (transcript or search query).
-
-    Returns:
-        list[float] — embedding vector.
-    """
+@lru_cache(maxsize=512)
+def _embed_text_cached(text: str) -> tuple[float, ...]:
     if not Config.GEMINI_API_KEY:
         print("[Embeddings] GEMINI_API_KEY not set -> using fallback embedding")
-        return _fallback_embed(text)
+        return tuple(_fallback_embed(text))
 
     try:
         from google import genai
@@ -65,20 +57,22 @@ def embed_text(text: str) -> list[float]:
             contents=text,
             config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT"),
         )
-        return result.embeddings[0].values
+        return tuple(result.embeddings[0].values)
 
     except Exception as exc:
         print(f"[Embeddings] Gemini API failed ({exc}) -> using fallback embedding")
-        return _fallback_embed(text)
+        return tuple(_fallback_embed(text))
 
 
-def embed_query(text: str) -> list[float]:
-    """
-    Embed a search query. Uses RETRIEVAL_QUERY task type for better retrieval.
-    Falls back to embed_text behaviour if the API is unavailable.
-    """
+def embed_text(text: str) -> list[float]:
+    """Embed a text string using Gemini's embedding model (cached)."""
+    return list(_embed_text_cached(text.strip()))
+
+
+@lru_cache(maxsize=512)
+def _embed_query_cached(text: str) -> tuple[float, ...]:
     if not Config.GEMINI_API_KEY:
-        return _fallback_embed(text)
+        return tuple(_fallback_embed(text))
 
     try:
         from google import genai
@@ -90,8 +84,13 @@ def embed_query(text: str) -> list[float]:
             contents=text,
             config=types.EmbedContentConfig(task_type="RETRIEVAL_QUERY"),
         )
-        return result.embeddings[0].values
+        return tuple(result.embeddings[0].values)
 
     except Exception as exc:
         print(f"[Embeddings] Gemini query embed failed ({exc}) -> using fallback")
-        return _fallback_embed(text)
+        return tuple(_fallback_embed(text))
+
+
+def embed_query(text: str) -> list[float]:
+    """Embed a search query using RETRIEVAL_QUERY task type (cached)."""
+    return list(_embed_query_cached(text.strip()))
