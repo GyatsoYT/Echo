@@ -97,22 +97,7 @@ Instructions:
 3. Language & Tone: Match the language of the student's question naturally (English, Hinglish, or Hindi). If asked in Hinglish (e.g. "teacher kaun hai", "attendance kitni chahiye"), reply in natural, clear Hinglish or English.
 4. Be direct, practical, and factual to the provided memories only. Do not hallucinate external facts."""
 
-    # 1. Try Gemini first (fast & multilingual)
-    if Config.GEMINI_API_KEY:
-        for model in ["gemini-3.1-flash-lite", "gemini-3.6-flash"]:
-            try:
-                from google import genai
-                client = genai.Client(api_key=Config.GEMINI_API_KEY)
-                res = client.models.generate_content(
-                    model=model,
-                    contents=prompt,
-                )
-                if res and res.text:
-                    return {"answer": res.text.strip(), "source": "llm", "echo_count": n}
-            except Exception as exc:
-                print(f"[Synthesis] Gemini LLM ({model}) failed: {exc}")
-
-    # 2. Try Groq LLM (groq/compound-mini)
+    # 1. Try Groq LLM first (ultra-fast sub-second response ~300ms)
     if Config.GROQ_API_KEY:
         try:
             from groq import Groq
@@ -131,6 +116,21 @@ Instructions:
                 return {"answer": clean_answer, "source": "llm", "echo_count": n}
         except Exception as exc:
             print(f"[Synthesis] Groq LLM failed: {exc}")
+
+    # 2. Try Gemini (multilingual fallback)
+    if Config.GEMINI_API_KEY:
+        for model in ["gemini-3.1-flash-lite", "gemini-3.6-flash"]:
+            try:
+                from google import genai
+                client = genai.Client(api_key=Config.GEMINI_API_KEY)
+                res = client.models.generate_content(
+                    model=model,
+                    contents=prompt,
+                )
+                if res and res.text:
+                    return {"answer": res.text.strip(), "source": "llm", "echo_count": n}
+            except Exception as exc:
+                print(f"[Synthesis] Gemini LLM ({model}) failed: {exc}")
 
     # 3. Template fallback (pure offline math & formatting)
     answer = _template_synthesis(question, top_echoes)

@@ -310,7 +310,7 @@ async function searchEchoSynthesis(query) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query }),
-    }, 7000);
+    }, 10000);
 
     if (!res.ok) return null;
     const data = await res.json();
@@ -330,7 +330,9 @@ async function searchEchoSynthesis(query) {
     }
     return null;
   } catch (err) {
-    warn("Flask search request timed out/failed:", err.message);
+    if (err.name !== "AbortError") {
+      warn("Flask search request failed:", err.message);
+    }
     return null;
   }
 }
