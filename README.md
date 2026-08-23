@@ -1,273 +1,210 @@
-# Echo — Institutional Memory Engine
+<div align="center">
 
-> **"People graduate. Knowledge shouldn't."**
+# 👻 ECHO
+### The Living Institutional Memory Engine for Universities
 
-Echo is a semantic, time-aware institutional memory layer for universities. Seniors leave voice "Echoes" — tagged by course/professor/topic. Juniors ask questions in plain language. Echo searches semantically, synthesises answers from multiple Echoes, surfaces knowledge gaps, and shows memory health badges.
+**"Every batch leaves. Make sure their knowledge didn't take everything with them."**
+
+[![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![Flask](https://img.shields.io/badge/Flask-3.0-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
+[![Google Gemini](https://img.shields.io/badge/Google%20Gemini-Embeddings%20%26%20Flash-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
+[![Groq](https://img.shields.io/badge/Groq-Whisper%20%26%20LLM-F55036?style=for-the-badge)](https://groq.com/)
+[![WhatsApp](https://img.shields.io/badge/WhatsApp%20Bot-Baileys%20Multi--Device-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](https://github.com/WhiskeySockets/Baileys)
+[![Deployed on Railway](https://img.shields.io/badge/Railway-Production%20Live-0B0D0E?style=for-the-badge&logo=railway&logoColor=white)](https://railway.app)
+
+</div>
 
 ---
 
-## Quick Start
+## 📌 The Problem
 
+At modern engineering colleges and universities, senior wisdom is trapped in ephemeral WhatsApp groups, late-night DMs, and hallway conversations. 
+
+* *Which professor is strict with midterms?*
+* *How do you balance an IIT Madras dual degree with 48-hour project sprints?*
+* *How did past juniors crack international internships in Singapore or the Apple Academy?*
+
+When senior batches graduate, **years of institutional survival knowledge vanish forever**. Junior batches repeatedly make the same mistakes, ask the same unanswered questions, and struggle with the same unwritten rules.
+
+---
+
+## 💡 What is ECHO?
+
+**ECHO** is an AI-powered institutional memory engine that continuously captures, organizes, and synthesizes campus knowledge from both voice recordings on the web and real-time conversations across WhatsApp group chats.
+
+```
+       ┌────────────────────────────────────────────────────────┐
+       │                 CAMPUS KNOWLEDGE SOURCES                │
+       └────────────────────────────────────────────────────────┘
+                 │                                    │
+    🎙️ Voice Notes & Web Submissions        💬 WhatsApp Group Chats
+                 │                                    │
+                 ▼                                    ▼
+       [ Groq Whisper Large v3 ]             [ Baileys Event Stream ]
+        • Speech-to-Text Transcription        • Multi-lingual Intent Detection
+                 │                            • Q&A Verification (Groq/Gemini)
+                 ▼                                    │
+       [ Gemini Embeddings Engine ] ◄─────────────────┘
+        • 3072-Dimensional Vector Generation
+        • Cross-Group Deduplication & Consensus Merging
+                 │
+                 ▼
+       ┌────────────────────────────────────────────────────────┐
+       │             ECHO MULTI-CHANNEL CORE (SQLite)           │
+       │    • Persistent Knowledge Store   • Time-Decay Engine  │
+       │    • Knowledge Gaps Tracker       • Consensus Metrics  │
+       └────────────────────────────────────────────────────────┘
+                 │                                    │
+                 ▼                                    ▼
+       🌐 WEB APP DISCOVERY                  💬 WHATSAPP BOT REPLIES
+        • Semantic Cosine Search              • Automated Instant Answers
+        • Senior Consensus Synthesis          • DM Fallback for Locked Groups
+        • Interactive Knowledge Radar         • 👻 Silent Confirmation Reactions
+```
+
+---
+
+## 🚀 Key Features
+
+### 1. 💬 Autonomous WhatsApp Knowledge Bot
+* **Multi-Lingual Question Intent Detection**: Understands questions in plain English, Hindi, and Hinglish (e.g. *"Pushkar sir kaisa padhate h"*, *"attendance criteria kya hai"*), with or without question marks.
+* **Instant Auto-Replies**: When a student asks a question in any group, Echo semantically matches the knowledge base and delivers a verified answer in seconds.
+* **Locked Announcement Channel Support**: If the bot lacks permission to post in a restricted announcement channel, it privately direct-messages (DM) the student the verified answer.
+* **Passive Conversation Capture**: When a senior answers a junior's question in chat, Echo verifies the pair via LLM and saves it to the central repository with a 👻 ghost reaction.
+* **Silent Confirmation Voting**: Reactions like 👍, 💯, or messages like `+1` / `vouch` automatically boost the memory's confidence score across groups.
+
+### 2. 🧠 "Ask the Batch" — Consensus Synthesis
+* Instead of returning disconnected search links, Echo analyzes matching senior memories and uses **Google Gemini** & **Groq** to generate a single synthesized consensus answer.
+* Displays a live **Senior Agreement Meter** showing the percentage of seniors aligned on the advice.
+
+### 3. 🎙️ 60-Second Senior Voice Studio
+* Built-in browser audio recorder powered by native `MediaRecorder` and real-time audio equalizers.
+* Automatic transcription via **Groq Whisper Large v3 Turbo** with near-zero latency.
+* Tagged by Course Code, Professor, and Category with a real-time live preview card.
+
+### 4. 📡 The Knowledge Gaps Radar
+* Automatically logs every student search query that currently lacks a senior answer.
+* Visualizes campus blind spots ranked by question frequency, enabling senior mentors and student councils to address high-demand topics with 1-click answer workflows.
+
+### 5. 🧬 Time-Decay Memory Health
+* Every piece of advice has a dynamic health score based on time-decay math and confirmation counts:
+  - 🟢 **Fresh** (< 6 months / recently reconfirmed)
+  - 🟡 **Aging** (6–12 months)
+  - 🔴 **Stale** (> 1 year / outdated curriculum)
+* Students can click **"Mark as Still True"** to re-verify older advice and restore freshness.
+
+### 6. 🏷️ JIT (Just-In-Time) QR Handover
+* One-click printable QR code generation for any specific Echo.
+* Stick them on hardware lab doors, hostel noticeboards, or professor cabins so juniors can scan and listen to senior notes right where they need them.
+
+---
+
+## 🛠️ Technology Stack
+
+| Domain | Technology | Purpose |
+|---|---|---|
+| **Backend** | Python 3.11+, Flask | High-throughput REST API and templating engine |
+| **Speech-to-Text** | Groq Whisper Large v3 Turbo | Blazing-fast voice note transcription |
+| **Vector Embeddings** | Google Gemini `gemini-embedding-001` | 3072-dimensional semantic vector search |
+| **Synthesis & LLM** | Google Gemini 3.1 Flash + Groq | Multi-perspective consensus answer synthesis |
+| **WhatsApp Layer** | Node.js + `@whiskeysockets/baileys` | Multi-device WebSocket connection to WhatsApp |
+| **Database** | SQLite + NumPy | Local vector math and institutional storage |
+| **Styling & UI** | Vanilla CSS3 (Custom Design System) | Glassmorphism, CSS keyframe animations, dark mode |
+| **Deployment** | Railway | Microservices architecture with persistent volumes |
+
+---
+
+## 🏁 Quick Start (Run Locally)
+
+### 1. Prerequisites
+- Python 3.11 or higher
+- Node.js 18+ (for WhatsApp Bot)
+- Free API keys from [Groq Console](https://console.groq.com/) and [Google AI Studio](https://aistudio.google.com/)
+
+### 2. Backend Setup
 ```bash
-# 1. Clone / navigate to project
-cd d:/Hackathon
+# Clone the repository
+git clone https://github.com/GyatsoYT/Echo.git
+cd Echo
 
-# 2. Install dependencies
-python -m pip install -r requirements.txt
+# Install Python dependencies
+pip install -r requirements.txt
 
-# 3. Set up API keys (copy .env.example → .env, fill in keys)
-copy .env.example .env
-# Edit .env with your keys:
-#   GROQ_API_KEY  → from https://console.groq.com/   (free, no credit card)
-#   GEMINI_API_KEY → from https://aistudio.google.com/ (free, no credit card)
+# Create environment configuration
+cp .env.example .env
+```
 
-# 4. Run
+Edit `.env` with your API keys:
+```ini
+GROQ_API_KEY=gsk_...
+GEMINI_API_KEY=AIzaSy...
+SECRET_KEY=your-secret-key
+```
+
+Run the Flask server:
+```bash
 python app.py
-
-# 5. Open http://localhost:5000
 ```
+*Visit `http://localhost:5000` in your browser.*
 
 ---
 
-## Project Structure
-
-```
-Echo/
-├── app.py                    ← Flask app entry point (start here)
-├── config.py                 ← All constants & API keys (tweak thresholds here)
-├── requirements.txt
-├── .env.example              ← Copy to .env, fill in keys
-│
-├── database/
-│   └── db.py                 ← SQLite schema + all DB helpers
-│
-├── services/
-│   ├── transcription.py      ← Groq Whisper (audio → text)
-│   ├── embeddings.py         ← Gemini embedding + offline fallback
-│   ├── search.py             ← Cosine similarity search over stored Echoes
-│   ├── synthesis.py          ← "Ask the Batch" (Groq Llama + template fallback)
-│   └── memory_health.py      ← Freshness + confirmation badge math
-│
-├── routes/
-│   ├── echoes.py             ← POST /record, GET /echoes, GET /echoes/<id>
-│   ├── search.py             ← GET/POST /search, GET /results
-│   └── admin.py              ← GET /gaps, GET /qr/<id>, POST /seed
-│
-├── static/
-│   ├── css/style.css         ← All styling (design system)
-│   ├── js/recorder.js        ← MediaRecorder (in-browser audio capture)
-│   └── js/app.js             ← Form handling, animations, alerts
-│
-└── templates/
-    ├── base.html             ← Navbar, footer, shared layout
-    ├── index.html            ← Landing page
-    ├── record.html           ← Leave an Echo (senior view)
-    ├── search.html           ← Ask a question (junior view)
-    ├── results.html          ← Search results + Ask the Batch synthesis
-    ├── echoes.html           ← Browse all Echoes
-    ├── echo_detail.html      ← Single Echo + QR code + delete
-    ├── gaps.html             ← Knowledge Gaps dashboard
-    └── error.html            ← 404/500 error pages
-```
-
----
-
-## Tech Stack
-
-| Layer | Technology | Why |
-|---|---|---|
-| Backend | Flask (Python) | Simple, fast to iterate |
-| Frontend | HTML + Vanilla CSS + JS | No build tooling needed |
-| Speech-to-text | Groq Whisper Large v3 Turbo | Free tier, 2000 req/day, blazing fast |
-| Embeddings | Google Gemini `gemini-embedding-001` | Free tier, 1500 req/day, high quality |
-| Synthesis | Groq Llama 3.1-8b-instant | Same free Groq account, fast |
-| Similarity | numpy cosine similarity | Perfect for demo-scale data |
-| Database | SQLite | Zero setup, file-based |
-| Audio | MediaRecorder Web API | Native, no libraries |
-| QR codes | `qrcode` Python package | One-line generation |
-
----
-
-## API Keys Setup
-
-### Groq (Whisper + LLM)
-1. Go to https://console.groq.com/
-2. Sign up (free, no credit card)
-3. Navigate to API Keys → Create New Key
-4. Copy the key to `.env` as `GROQ_API_KEY`
-
-Free limits: **2,000 whisper requests/day**, **unlimited chat** (rate limited by token/minute but generous)
-
-### Gemini Embeddings
-1. Go to https://aistudio.google.com/
-2. Sign in with Google
-3. Get API Key → Create API Key
-4. Copy to `.env` as `GEMINI_API_KEY`
-
-Free limits: **1,500 embedding requests/day**, **10M tokens/minute**
-
----
-
-## Features
-
-### 1. Leave an Echo (Senior View)
-- **URL:** `/record`
-- Record audio in-browser (MediaRecorder) OR upload a file OR type manually
-- Tag by course code (required), professor (optional), topic (optional)
-- Auto-transcribes via Groq Whisper
-- Auto-embeds via Gemini
-- **Deduplication:** If a near-identical Echo already exists (>92% similarity + same course), confirmation count is bumped instead of inserting a duplicate
-
-### 2. Ask the Batch (Junior View)
-- **URL:** `/search` → `/results?q=...`
-- Type a plain-language question
-- Semantic search via cosine similarity across all Echo embeddings
-- Returns top matches sorted by relevance
-- If 2+ matches → triggers "Ask the Batch" synthesis (Groq LLM or template fallback)
-- Every search is logged (powers Knowledge Gaps)
-
-### 3. Memory Health Badge
-- Shown on every Echo card
-- `🟢 fresh` = < 6 months old
-- `🟡 aging` = 6–12 months old
-- `🔴 stale` = > 12 months old
-- Also shows confirmation count ("confirmed by 3 seniors")
-
-### 4. Knowledge Gaps
-- **URL:** `/gaps`
-- Shows searches where the best match scored below 0.45 similarity
-- Grouped by query text, sorted by frequency
-- Your demo's killer feature — shows the institution's blind spots
-
-### 5. JIT Handover (QR Codes)
-- **URL:** `/qr/<echo_id>`
-- Generates a purple QR code image linking directly to that Echo
-- Download and stick it on lab doors, notice boards, etc.
-
----
-
-## Seeding Demo Data
-
-The database starts empty. For demos, seed it first:
-
-**Option A: Via UI (easiest)**
-- Visit `http://localhost:5000`
-- If no Echoes exist, a "🌱 Seed Demo Data" button appears
-- Click it — inserts 15 realistic Echoes covering CS301, EC202, MATH101, portal quirks, etc.
-
-**Option B: Via API**
+### 3. WhatsApp Bot Setup
 ```bash
-curl -X POST http://localhost:5000/seed
+cd whatsapp-bot
+npm install
+node bot.js
 ```
-
-**Option C: While the app is running**, navigate to `/gaps` after seeding and do a few test searches to populate the Knowledge Gaps table too.
-
----
-
-## Configuration (config.py)
-
-Tweak these constants without touching core logic:
-
-```python
-SIMILARITY_THRESHOLD = 0.45   # Minimum cosine similarity to show as a result
-GAP_THRESHOLD = 0.45          # Below this → logged as a Knowledge Gap
-ASK_BATCH_MIN_MATCHES = 2     # Min results before triggering synthesis
-HEALTH_GREEN_DAYS = 180       # < 6 months → 🟢 fresh
-HEALTH_YELLOW_DAYS = 365      # < 12 months → 🟡 aging
-```
+*Scan the QR code printed in the terminal (or at `http://localhost:5000/bot/qr`) using WhatsApp on your phone (`Linked Devices`).*
 
 ---
 
-## Fallback Plan (Demo Day)
-
-If APIs are down or wifi is flaky:
-
-| Feature | Fallback |
-|---|---|
-| Groq Whisper fails | Show manual transcript input (already coded) |
-| Gemini embedding fails | Uses hash-based bag-of-words embedding (already coded) |
-| Groq LLM synthesis fails | Uses template-based synthesis (already coded) |
-
-All fallbacks are already in the code as `try/except` blocks. Zero extra work needed.
-
-Pre-compute and cache seed Echo embeddings before the demo while wifi is confirmed good.
-
----
-
-## Routes Reference
-
-| Method | Route | Description |
-|---|---|---|
-| GET | `/` | Landing page |
-| GET | `/record` | Leave an Echo page |
-| POST | `/record` | Submit audio/transcript |
-| GET | `/echoes` | Browse all Echoes |
-| GET | `/echoes/<id>` | Single Echo detail |
-| POST | `/echoes/<id>/delete` | Delete an Echo |
-| GET | `/search` | Search page |
-| POST | `/search` | JSON search API |
-| GET | `/results?q=...` | Rendered results page |
-| GET | `/gaps` | Knowledge Gaps view |
-| GET | `/qr/<id>` | Generate QR code image |
-| GET | `/api/stats` | JSON stats |
-| POST | `/seed` | Seed demo data |
-
----
-
-## Data Model
+## 🏛️ Architecture & Data Model
 
 ```sql
--- Echoes: the core memory units
+-- Core Memory Units (Audio, Transcripts, Vector Embeddings)
 CREATE TABLE echoes (
-    id              INTEGER PRIMARY KEY AUTOINCREMENT,
-    course_tag      TEXT    NOT NULL,
-    professor_tag   TEXT,
-    topic_tag       TEXT,
-    transcript      TEXT    NOT NULL,
-    audio_path      TEXT    NOT NULL,
-    embedding       BLOB    NOT NULL,   -- JSON float array
-    confirmations   INTEGER DEFAULT 1,
-    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    course_tag        TEXT    NOT NULL,
+    professor_tag     TEXT,
+    topic_tag         TEXT,
+    transcript        TEXT    NOT NULL,
+    audio_path        TEXT    DEFAULT '',
+    embedding         BLOB    NOT NULL,
+    confirmations     INTEGER DEFAULT 1,
+    source            TEXT    DEFAULT 'web',
+    question_context  TEXT,
+    group_names       TEXT    DEFAULT '[]',
+    group_count       INTEGER DEFAULT 1,
+    last_confirmed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Searches: powers Knowledge Gaps
+-- Search Analytics (Powers the Knowledge Gaps Radar)
 CREATE TABLE searches (
-    id              INTEGER PRIMARY KEY AUTOINCREMENT,
-    query_text      TEXT    NOT NULL,
-    best_match_score REAL,
-    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    query_text        TEXT    NOT NULL,
+    best_match_score  REAL,
+    created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
 ---
 
-## Team Task Split
+## 🌐 Production Deployment (Railway)
 
-### Backend (Gyatso — owner)
-- `app.py`, `config.py`, `database/`, `services/`, `routes/`
-- Groq + Gemini API integration
-- Seed data
+ECHO is configured for turnkey multi-service deployment on **Railway**:
 
-### Frontend (teammate 1)
-- `static/css/style.css` — enhance/polish the design system
-- `templates/` — add UI improvements, animations
-- `static/js/app.js` — any additional interactions
-
-### Docs / Demo (teammate 2)
-- `README.md` — polish for submission
-- Demo script (see PRD §10)
-- Seed more realistic Echoes for your actual institution
-- QR codes — generate and print for the JIT Handover demo
+1. **Flask Web API**: Deployed with `Procfile` / `railway.toml` using `gunicorn app:app`.
+2. **WhatsApp Bot Worker**: Deployed in `whatsapp-bot/` using persistent volume storage for WhatsApp session keys (`/data/auth_session`).
+3. **Zero-Config Persistent Storage**: Configured via `DATABASE_PATH` and `UPLOAD_FOLDER` environment variables.
 
 ---
 
-## Demo Script (Quick Reference)
+## 📄 License
 
-1. Open app, show zero-state → click "Seed Demo Data"
-2. Go to `/search` → ask "does Prof. Mehta recycle exam questions?"
-3. Show results: Echo cards + Memory Health badges + Ask the Batch synthesis
-4. Go to `/gaps` → "17 students asked X. No Echo answers it yet." ← killer line
-5. Go to `/record` → live-record a 30-second voice Echo
-6. Search for it → show it appearing semantically
-7. Show QR code for JIT Handover concept
-8. Close: "People graduate. Knowledge shouldn't."
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+
+<div align="center">
+  <sub>Built for the Scaler School of Technology (SST) Community · People graduate. Knowledge shouldn't.</sub>
+</div>
