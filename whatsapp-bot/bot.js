@@ -73,8 +73,9 @@ const CONFIG = {
   MIN_QUESTION_LEN: 10,
   MIN_ANSWER_LEN:   12,
 
-  // Cooldown: don't send auto-replies more than once per N ms per user
-  AUTO_REPLY_COOLDOWN_MS: 60_000,
+  // Cooldown: don't resend the same answer for the same question within N ms
+  // (keyed per sender+question fingerprint, NOT per sender — so different questions always fire)
+  AUTO_REPLY_COOLDOWN_MS: 90_000,
 
   // Auth session folder
   // On Railway: set AUTH_FOLDER=/data/auth_session (persistent volume)
@@ -795,9 +796,13 @@ async function startBot() {
           recordRecentQuestion(jid, cleanText, senderId, msg.key);
 
           if (CONFIG.ENABLE_POINTER_REPLIES) {
-            // Cooldown check per sender
-            const lastReply = autoReplyCooldowns.get(senderId);
+            // Cooldown key = sender + question fingerprint (first 40 chars)
+            // This lets the same person ask DIFFERENT questions without being blocked.
+            // Only the exact same question from the same person is rate-limited.
+            const questionFingerprint = `${senderId}::${cleanText.slice(0, 40).toLowerCase().replace(/\s+/g, ' ')}`;
+            const lastReply = autoReplyCooldowns.get(questionFingerprint);
             if (lastReply && Date.now() - lastReply < CONFIG.AUTO_REPLY_COOLDOWN_MS) {
+              log(`[Cooldown] Skipping duplicate question from same sender: "${cleanText.slice(0, 50)}"`);
               continue;
             }
 
@@ -805,7 +810,7 @@ async function startBot() {
             const searchResult = await searchEchoSynthesis(cleanText);
             if (searchResult && searchResult.answer) {
               try {
-                autoReplyCooldowns.set(senderId, Date.now());
+                autoReplyCooldowns.set(questionFingerprint, Date.now());
                 const formattedReply =
                   `👻 *Echo might have this one:*\n\n` +
                   `"${searchResult.answer}"\n\n` +
@@ -820,7 +825,7 @@ async function startBot() {
                   });
                   log(`Auto-reply sent for question in "${groupName}": "${cleanText.slice(0, 60)}"`);
                 } catch (groupSendErr) {
-                  // 2. If group is an Announcement Channel / locked, send via direct message (DM)
+                  // 2. If group is an Announcement Channel / locked, send via DM
                   if (senderId && senderId !== jid) {
                     const dmReply =
                       `👻 *Echo — Answer to your question in ${groupName}:*\n\n` +
@@ -828,7 +833,7 @@ async function startBot() {
                       `_💡 Seniors have previously answered this in Echo._\n` +
                       `🔗 *Read more & see sources:*\n${searchResult.url}`;
                     await sock.sendMessage(senderId, { text: dmReply });
-                    log(`Auto-reply sent via private DM to sender for question in announcement group "${groupName}"`);
+                    log(`Auto-reply sent via DM for question in announcement group "${groupName}"`);
                   } else {
                     warn("Auto-reply failed:", groupSendErr.message);
                   }
@@ -836,6 +841,9 @@ async function startBot() {
               } catch (replyErr) {
                 warn("Auto-reply error:", replyErr.message);
               }
+            } else {
+              // No answer found — log as knowledge gap so you can spot gaps in Railway logs
+              log(`[Knowledge Gap] No Echo answer for: "${cleanText.slice(0, 80)}" in "${groupName}"`);
             }
           }
         }
