@@ -305,6 +305,17 @@ SEED_DATA = [
 
 @admin_bp.route("/seed", methods=["POST"])
 def seed_data():
+    admin_secret = os.getenv("ADMIN_SECRET", current_app.config.get("SECRET_KEY", "sst-echo-secret-2026"))
+    req_secret = (
+        request.headers.get("X-Admin-Secret") or
+        request.args.get("secret") or
+        (request.get_json(silent=True) or {}).get("secret") or
+        ""
+    )
+
+    if req_secret != admin_secret:
+        return jsonify({"error": "Unauthorized. Admin secret required."}), 403
+
     inserted = 0
     skipped = 0
 
