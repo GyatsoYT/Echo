@@ -201,6 +201,62 @@ def api_recent_echoes():
     return jsonify(recent), 200
 
 
+# ── Bot Live QR Sync & Web Viewer ──────────────────────────────────────────
+
+_BOT_STATE = {
+    "qr": None,
+    "status": "waiting",
+    "updated_at": None,
+}
+
+
+@admin_bp.route("/api/bot/qr", methods=["POST"])
+def api_receive_bot_qr():
+    """Receives live QR code string or status update from the WhatsApp bot."""
+    data = request.get_json(force=True, silent=True) or {}
+    _BOT_STATE["qr"] = data.get("qr")
+    _BOT_STATE["status"] = data.get("status", "waiting")
+    from datetime import datetime
+    _BOT_STATE["updated_at"] = datetime.now().strftime("%H:%M:%S")
+    return jsonify({"status": "received"}), 200
+
+
+@admin_bp.route("/api/bot/qr/image", methods=["GET"])
+def bot_qr_image():
+    """Generate and stream a high-res PNG image of the active WhatsApp bot QR."""
+    import qrcode
+    qr_str = _BOT_STATE.get("qr")
+    if not qr_str:
+        # Generate placeholder
+        qr_str = "https://github.com"
+
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(qr_str)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="#000000", back_color="#FFFFFF")
+
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+    return send_file(buf, mimetype="image/png")
+
+
+@admin_bp.route("/bot/qr", methods=["GET"])
+def view_bot_qr():
+    """Web page displaying the active WhatsApp bot QR code with auto-refresh."""
+    return render_template(
+        "bot_qr.html",
+        has_qr=bool(_BOT_STATE.get("qr")),
+        status=_BOT_STATE.get("status", "waiting"),
+        updated_at=_BOT_STATE.get("updated_at", "Just now"),
+    )
+
+
 # ── QR Code generation (JIT Handover) ──────────────────────────────────────
 
 @admin_bp.route("/qr/<int:echo_id>", methods=["GET"])

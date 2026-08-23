@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Link WhatsApp Bot — ECHO{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 680px; margin: 40px auto; padding: 0 20px;">
+  <div style="text-align: center; margin-bottom: 30px;">
+    <div style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; background: rgba(37, 211, 102, 0.12); border: 1px solid rgba(37, 211, 102, 0.3); border-radius: 50%; margin-bottom: 16px;">
+      <span style="font-size: 32px;">📱</span>
+    </div>
+    <h1 style="font-family: var(--font-heading, 'Space Grotesk', sans-serif); font-size: 28px; font-weight: 700; margin: 0 0 8px 0; color: #fff;">
+      Link WhatsApp Bot
+    </h1>
+    <p style="color: rgba(255, 255, 255, 0.65); font-size: 15px; margin: 0;">
+      Scan the QR code below to connect your Echo bot to your WhatsApp groups.
+    </p>
+  </div>
+
+  <div style="background: #181A20; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 32px; text-align: center; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);">
+    {% if status == "connected" %}
+      <div style="padding: 40px 20px;">
+        <div style="font-size: 48px; margin-bottom: 16px;">✅</div>
+        <h2 style="font-size: 22px; color: #25D366; margin: 0 0 10px 0;">Bot is Connected!</h2>
+        <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin: 0 0 24px 0;">
+          Echo is actively listening in your WhatsApp groups and capturing campus knowledge.
+        </p>
+        <a href="{{ url_for('echoes.browse_echoes') }}" class="btn btn-primary" style="display: inline-block; padding: 10px 24px; text-decoration: none; border-radius: 8px; font-weight: 600;">
+          Browse Captured Echoes →
+        </a>
+      </div>
+    {% else %}
+      <!-- Live QR Code Card -->
+      <div style="background: #FFFFFF; padding: 20px; border-radius: 12px; display: inline-block; box-shadow: 0 8px 24px rgba(0,0,0,0.2); margin-bottom: 24px;">
+        <img id="bot-qr-img" src="/api/bot/qr/image?t={{ updated_at }}" alt="WhatsApp QR Code" style="width: 260px; height: 260px; display: block; border-radius: 4px;" />
+      </div>
+
+      <div style="margin-bottom: 24px;">
+        <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, 0.05); padding: 6px 14px; border-radius: 20px; font-size: 13px; color: rgba(255, 255, 255, 0.8);">
+          <span style="display: inline-block; width: 8px; height: 8px; background: #25D366; border-radius: 50%; animation: pulse 1.5s infinite;"></span>
+          Auto-refreshing every 4 seconds
+        </div>
+      </div>
+
+      <!-- Instructions -->
+      <div style="text-align: left; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 12px; padding: 20px; font-size: 14px; color: rgba(255, 255, 255, 0.85); line-height: 1.6;">
+        <div style="font-weight: 600; color: #fff; margin-bottom: 10px;">How to link:</div>
+        <ol style="margin: 0; padding-left: 20px;">
+          <li style="margin-bottom: 6px;">Open <strong>WhatsApp</strong> on the bot phone</li>
+          <li style="margin-bottom: 6px;">Tap <strong>Menu</strong> (Android) or <strong>Settings</strong> (iPhone)</li>
+          <li style="margin-bottom: 6px;">Tap <strong>Linked Devices</strong> &rarr; <strong>Link a Device</strong></li>
+          <li>Point your phone camera at the QR code above</li>
+        </ol>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  // Auto-refresh the QR code image every 4 seconds if not connected
+  {% if status != "connected" %}
+  setInterval(function() {
+    var img = document.getElementById("bot-qr-img");
+    if (img) {
+      img.src = "/api/bot/qr/image?t=" + new Date().getTime();
+    }
+  }, 4000);
+  {% endif %}
+</script>
+
+<style>
+  @keyframes pulse {
+    0% { opacity: 0.4; transform: scale(0.95); }
+    50% { opacity: 1; transform: scale(1.05); }
+    100% { opacity: 0.4; transform: scale(0.95); }
+  }
+</style>
+{% endblock %}

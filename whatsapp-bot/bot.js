@@ -33,6 +33,7 @@ import { fileURLToPath } from "url";
 import fs from "fs";
 
 import os from "os";
+import http from "http";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -60,6 +61,9 @@ const CONFIG = {
 
   // Public/LAN URL for clickable links in WhatsApp messages
   PUBLIC_URL: process.env.PUBLIC_URL || `http://${lanIp}:5000`,
+
+  // Optional phone number for 8-digit pairing code (e.g. 919876543210)
+  PHONE_NUMBER: process.env.PHONE_NUMBER || "",
 
   // API keys for quality filtering
   GROQ_API_KEY: process.env.GROQ_API_KEY || "",
@@ -433,14 +437,64 @@ async function confirmEcho(queryOrId, groupName = "") {
   return null;
 }
 
+// ── Lightweight HTTP Server for QR viewing (if port available) ─────────────────
+
+let _activeQrString = null;
+let _httpServerStarted = false;
+
+function ensureQrServer() {
+  if (_httpServerStarted) return;
+  const port = process.env.PORT || 3000;
+  try {
+    const server = http.createServer((req, res) => {
+      if (req.url === "/qr" || req.url === "/") {
+        res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+        if (!_activeQrString) {
+          res.end(`
+            <html><body style="font-family:sans-serif;text-align:center;padding:40px;background:#111;color:#fff;">
+              <h2>✅ WhatsApp Bot Connected or Initializing...</h2>
+              <p>Check the server logs if you need to reconnect.</p>
+            </body></html>
+          `);
+        } else {
+          const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(_activeQrString)}`;
+          res.end(`
+            <html>
+            <head><meta http-equiv="refresh" content="6"><title>Scan WhatsApp QR</title></head>
+            <body style="font-family:sans-serif;text-align:center;padding:30px;background:#0F1117;color:#fff;">
+              <h2 style="color:#25D366;margin-bottom:8px;">📱 Link WhatsApp Bot</h2>
+              <p style="color:#aaa;margin-bottom:20px;">Open WhatsApp > Linked Devices > Link a Device, then scan:</p>
+              <div style="background:#fff;padding:16px;display:inline-block;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,0.5);">
+                <img src="${qrImgUrl}" width="320" height="320" style="display:block;" />
+              </div>
+              <p style="color:#666;font-size:13px;margin-top:16px;">Auto-refreshing every 6s</p>
+            </body>
+            </html>
+          `);
+        }
+      } else {
+        res.writeHead(404);
+        res.end();
+      }
+    });
+    server.listen(port, () => {
+      log(`Local QR viewer server running on port ${port}`);
+    });
+    _httpServerStarted = true;
+  } catch (err) {
+    warn("Could not start local QR HTTP server:", err.message);
+  }
+}
+
 // ── Main bot ──────────────────────────────────────────────────────────────────
 
 async function startBot() {
+  ensureQrServer();
+
   const { state, saveCreds } = await useMultiFileAuthState(CONFIG.AUTH_FOLDER);
   const { version } = await fetchLatestBaileysVersion();
 
   log(`Starting Echo WhatsApp Bot (Baileys v${version.join(".")})`);
-  log("Scan the QR code below with the bot's WhatsApp number:\n");
 
   const sock = makeWASocket({
     version,
@@ -452,22 +506,71 @@ async function startBot() {
   // Save credentials on update
   sock.ev.on("creds.update", saveCreds);
 
+  // Optional: Pairing Code authentication (no QR camera needed!)
+  if (!sock.authState.creds.registered && CONFIG.PHONE_NUMBER) {
+    const cleanNumber = CONFIG.PHONE_NUMBER.replace(/[^0-9]/g, "");
+    if (cleanNumber.length >= 10) {
+      setTimeout(async () => {
+        try {
+          const code = await sock.requestPairingCode(cleanNumber);
+          log("\n=======================================================");
+          log(`🔑 OPTION A: WHATSAPP PAIRING CODE (NO QR SCAN NEEDED)`);
+          log(`👉 8-DIGIT PAIRING CODE: ${code}`);
+          log(`=======================================================`);
+          log(`Steps on phone:`);
+          log(`1. Open WhatsApp -> Settings -> Linked Devices`);
+          log(`2. Tap "Link a Device" -> "Link with phone number instead"`);
+          log(`3. Enter this code: ${code}\n`);
+        } catch (err) {
+          warn("Pairing code error:", err.message);
+        }
+      }, 3000);
+    }
+  }
+
   // Handle connection updates
   sock.ev.on("connection.update", ({ connection, lastDisconnect, qr }) => {
     if (qr) {
-      log("Scan this QR code in WhatsApp (Linked Devices > Link a Device):\n");
-      qrcode.generate(qr, { small: true });
+      _activeQrString = qr;
+      const directImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qr)}`;
+
+      log("\n=======================================================");
+      log("📱 OPTION B: SCAN QR CODE IN YOUR BROWSER");
+      log("Click or open this link to see a crystal-clear QR image:");
+      log(`👉 ${directImageUrl}`);
+      if (CONFIG.PUBLIC_URL || CONFIG.FLASK_URL) {
+        log(`👉 OR ON YOUR WEBSITE: ${(CONFIG.PUBLIC_URL || CONFIG.FLASK_URL).replace(/\/$/, '')}/bot/qr`);
+      }
+      log("=======================================================\n");
+
+      // Also sync to Flask backend
+      fetchWithTimeout(`${CONFIG.FLASK_URL}/api/bot/qr`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ qr, status: "waiting" }),
+      }, 2500).catch(() => {});
     }
+
     if (connection === "close") {
       const code = lastDisconnect?.error?.output?.statusCode;
       const shouldReconnect = code !== DisconnectReason.loggedOut;
       warn(`Connection closed (code ${code}). Reconnecting in 3s: ${shouldReconnect}`);
       if (shouldReconnect) setTimeout(startBot, 3000);
     } else if (connection === "open") {
-      log("Connected to WhatsApp! Bot is listening in groups.");
+      _activeQrString = null;
+      log("\n=======================================================");
+      log("✅ CONNECTED TO WHATSAPP! Bot is listening in groups.");
       log(`Flask backend: ${CONFIG.FLASK_URL}`);
       log(`Clickable Public URL: ${CONFIG.PUBLIC_URL}`);
-      log(`Pointer replies: ${CONFIG.ENABLE_POINTER_REPLIES ? "enabled" : "disabled"}\n`);
+      log(`Pointer replies: ${CONFIG.ENABLE_POINTER_REPLIES ? "enabled" : "disabled"}`);
+      log("=======================================================\n");
+
+      // Sync connected status to Flask backend
+      fetchWithTimeout(`${CONFIG.FLASK_URL}/api/bot/qr`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ qr: null, status: "connected" }),
+      }, 2500).catch(() => {});
     }
   });
 
