@@ -472,6 +472,47 @@ async function confirmEcho(queryOrId, groupName = "") {
   return null;
 }
 
+// ── Universal Message Content Extractor (Handles Ephemeral, ViewOnce, Community Sub-Groups) ──
+
+function extractMessageContent(rawMsg) {
+  if (!rawMsg) return { text: "", quotedMsg: null, quotedId: null, quotedParticipant: null };
+
+  let m = rawMsg;
+  // Unwrap nested WhatsApp wrappers (ephemeral disappearing messages, view once, document captions)
+  while (m?.ephemeralMessage || m?.viewOnceMessage || m?.viewOnceMessageV2 || m?.documentWithCaptionMessage) {
+    m = m.ephemeralMessage?.message ||
+        m.viewOnceMessage?.message ||
+        m.viewOnceMessageV2?.message ||
+        m.documentWithCaptionMessage?.message ||
+        m;
+  }
+
+  const text = (
+    m?.conversation ||
+    m?.extendedTextMessage?.text ||
+    m?.imageMessage?.caption ||
+    m?.videoMessage?.caption ||
+    m?.documentMessage?.caption ||
+    ""
+  ).trim();
+
+  const contextInfo =
+    m?.extendedTextMessage?.contextInfo ||
+    m?.imageMessage?.contextInfo ||
+    m?.videoMessage?.contextInfo ||
+    m?.documentMessage?.contextInfo;
+
+  let quotedMsg = contextInfo?.quotedMessage || null;
+  if (quotedMsg?.ephemeralMessage) quotedMsg = quotedMsg.ephemeralMessage.message;
+  if (quotedMsg?.viewOnceMessage) quotedMsg = quotedMsg.viewOnceMessage.message;
+  if (quotedMsg?.viewOnceMessageV2) quotedMsg = quotedMsg.viewOnceMessageV2.message;
+
+  const quotedId = contextInfo?.stanzaId || null;
+  const quotedParticipant = contextInfo?.participant || null;
+
+  return { text, quotedMsg, quotedId, quotedParticipant };
+}
+
 // ── Lightweight HTTP Server for QR viewing (if port available) ─────────────────
 
 let _activeQrString = null;
@@ -647,24 +688,15 @@ async function startBot() {
         const senderId = msg.key.participant || jid;
         const groupName = await getGroupName(sock, jid);
 
-        // Extract text content
-        const body =
-          msg.message?.conversation ||
-          msg.message?.extendedTextMessage?.text ||
-          msg.message?.imageMessage?.caption ||
-          "";
+        // Extract text content (handles community sub-groups, ephemeral, view-once, etc.)
+        const { text: cleanText, quotedMsg, quotedId, quotedParticipant } = extractMessageContent(msg.message);
 
-        const cleanText = body.trim();
         if (!cleanText || cleanText.length < 2) continue;
 
         // ── Flow 0: Silent Confirmation (+1, same, agreed, vouch, this, fr) ────
         const isConfirmation =
           /^((\+1|same|true|agreed|vouch|this|fr|yes this|valid|confirmed|seconded|upvote|\+100|yep|definitely))\b/i.test(cleanText) &&
           cleanText.length < 25;
-
-        const quotedMsg = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-        const quotedId  = msg.message?.extendedTextMessage?.contextInfo?.stanzaId;
-        const quotedParticipant = msg.message?.extendedTextMessage?.contextInfo?.participant;
 
         if (isConfirmation) {
           const quotedText = (
