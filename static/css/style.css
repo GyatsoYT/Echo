@@ -2012,3 +2012,449 @@ h1, h2, h3, h4 {
     width: 100%;
   }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PREMIUM ANIMATIONS & POLISH LAYER — Echo v2 Demo
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Page Entry Fade ──────────────────────────────────────────────────────── */
+@keyframes pageEntryFade {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.page-main {
+  animation: pageEntryFade 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ── Hero Title Shimmer Effect ────────────────────────────────────────────── */
+@keyframes shimmerFlow {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.hero-live-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--text-primary) 0%,
+    var(--rust-bright) 30%,
+    #ffb347 50%,
+    var(--rust-bright) 70%,
+    var(--text-primary) 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmerFlow 3.5s linear infinite;
+}
+
+/* ── Ghost Card — Premium Entry with Stagger ─────────────────────────────── */
+@keyframes cardSlideUp {
+  from { opacity: 0; transform: translateY(32px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.ghost-result-card,
+.echo-interactive-card,
+.fancy-echo-card,
+.gap-fancy-box,
+.interactive-gap-card {
+  animation: cardSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.ghost-result-card:nth-child(1), .echo-interactive-card:nth-child(1) { animation-delay: 0.04s; }
+.ghost-result-card:nth-child(2), .echo-interactive-card:nth-child(2) { animation-delay: 0.09s; }
+.ghost-result-card:nth-child(3), .echo-interactive-card:nth-child(3) { animation-delay: 0.13s; }
+.ghost-result-card:nth-child(4), .echo-interactive-card:nth-child(4) { animation-delay: 0.17s; }
+.ghost-result-card:nth-child(5), .echo-interactive-card:nth-child(5) { animation-delay: 0.21s; }
+.ghost-result-card:nth-child(6), .echo-interactive-card:nth-child(6) { animation-delay: 0.25s; }
+
+/* ── Card Hover Lift & Glow ───────────────────────────────────────────────── */
+.ghost-result-card,
+.echo-interactive-card {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.25s ease;
+}
+
+.ghost-result-card:hover,
+.echo-interactive-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.45), 0 0 0 1px rgba(224,90,58,0.25);
+  border-color: rgba(224, 90, 58, 0.3);
+}
+
+/* ── Consensus / Synthesis Panel Entrance ───────────────────────────────── */
+@keyframes panelReveal {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.consensus-fancy-panel {
+  animation: panelReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+}
+
+/* ── Consensus Fill Bar Animated ────────────────────────────────────────── */
+.consensus-fill {
+  transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Search Bar Pulse Glow on Focus ─────────────────────────────────────── */
+.hero-search-wrap:focus-within {
+  box-shadow: 0 0 0 2px rgba(224, 90, 58, 0.35), 0 8px 32px rgba(0,0,0,0.35);
+  border-color: rgba(224, 90, 58, 0.5) !important;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.hero-search-input:focus {
+  outline: none;
+}
+
+/* ── Stat Numbers — Pulse on mount ──────────────────────────────────────── */
+@keyframes statPop {
+  0%   { transform: scale(0.85); opacity: 0; }
+  70%  { transform: scale(1.06); }
+  100% { transform: scale(1);    opacity: 1; }
+}
+
+.stat-num {
+  animation: statPop 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
+}
+
+/* ── Mic Pulse Ring (recorder page) ─────────────────────────────────────── */
+@keyframes micPulseExpand {
+  0%   { transform: scale(1);    opacity: 0.7; }
+  100% { transform: scale(2.2);  opacity: 0; }
+}
+
+.mic-pulse-ring {
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 2px solid rgba(224, 90, 58, 0.6);
+  pointer-events: none;
+  opacity: 0;
+}
+
+.mic-pulse-ring.active {
+  animation: micPulseExpand 1.4s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+/* Micro-animation on record button */
+.studio-record-btn {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.2s ease;
+}
+
+.studio-record-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 20px rgba(224, 90, 58, 0.5);
+}
+
+.studio-record-btn.recording {
+  animation: recordBtnPulse 1s ease-in-out infinite;
+}
+
+@keyframes recordBtnPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(224, 90, 58, 0.5); }
+  50%       { box-shadow: 0 0 36px rgba(224, 90, 58, 0.85); }
+}
+
+/* ── Equalizer Bars ─────────────────────────────────────────────────────── */
+.rec-equalizer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 3px;
+  height: 36px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.rec-equalizer.active {
+  opacity: 1;
+}
+
+.rec-eq-bar {
+  width: 4px;
+  background: var(--rust);
+  border-radius: 2px 2px 0 0;
+  height: 6px;
+  transition: height 0.15s ease;
+}
+
+.rec-equalizer.active .rec-eq-bar:nth-child(1) { animation: eqBounce 0.7s 0.00s ease-in-out infinite alternate; }
+.rec-equalizer.active .rec-eq-bar:nth-child(2) { animation: eqBounce 0.7s 0.10s ease-in-out infinite alternate; }
+.rec-equalizer.active .rec-eq-bar:nth-child(3) { animation: eqBounce 0.7s 0.20s ease-in-out infinite alternate; }
+.rec-equalizer.active .rec-eq-bar:nth-child(4) { animation: eqBounce 0.7s 0.05s ease-in-out infinite alternate; }
+.rec-equalizer.active .rec-eq-bar:nth-child(5) { animation: eqBounce 0.7s 0.15s ease-in-out infinite alternate; }
+.rec-equalizer.active .rec-eq-bar:nth-child(6) { animation: eqBounce 0.7s 0.25s ease-in-out infinite alternate; }
+.rec-equalizer.active .rec-eq-bar:nth-child(7) { animation: eqBounce 0.7s 0.08s ease-in-out infinite alternate; }
+
+@keyframes eqBounce {
+  from { height: 4px; }
+  to   { height: 32px; }
+}
+
+/* ── Popular Question Cards — Hover Arrow ────────────────────────────────── */
+.pq-card {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.22s ease,
+              border-color 0.22s ease;
+}
+.pq-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.4), 0 0 0 1px rgba(224,90,58,0.2);
+}
+.pq-card:hover .pq-arrow {
+  transform: translateX(5px);
+  color: var(--rust-bright);
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+.pq-arrow {
+  transition: transform 0.2s ease;
+  display: inline-block;
+}
+
+/* ── Filter Pills — Active Indicator Animation ───────────────────────────── */
+@keyframes pillActivate {
+  from { transform: scale(0.92); }
+  to   { transform: scale(1); }
+}
+.filter-pill.active,
+.sort-tab-btn.active,
+.gaps-filter-btn.active {
+  animation: pillActivate 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Knowledge Gap Badge — Glitch/Alert Pulse ───────────────────────────── */
+@keyframes gapBadgePulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
+}
+.gap-pulse-indicator,
+.eyebrow-signal-dot,
+.pulse-beacon {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--red);
+  animation: gapBadgePulse 1.8s ease-in-out infinite;
+  flex-shrink: 0;
+}
+.eyebrow-signal-dot {
+  background: var(--green);
+}
+.pulse-beacon {
+  background: var(--rust);
+  animation: gapBadgePulse 2s ease-in-out infinite;
+}
+
+/* ── Nav item active underline slide ────────────────────────────────────── */
+.nav-item {
+  position: relative;
+}
+.nav-item::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--rust);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.nav-item.active::after,
+.nav-item:hover::after {
+  transform: scaleX(1);
+}
+
+/* ── Header CTA button — shimmer on hover ───────────────────────────────── */
+.nav-cta-btn {
+  position: relative;
+  overflow: hidden;
+}
+.nav-cta-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  transform: skewX(-20deg);
+  transition: left 0.5s ease;
+}
+.nav-cta-btn:hover::before {
+  left: 150%;
+}
+
+/* ── Gaps Page — Severity Progress Bar ──────────────────────────────────── */
+.gap-severity-bar {
+  height: 3px;
+  border-radius: 3px;
+  background: var(--bg-elevated);
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+.gap-severity-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--rust), var(--red));
+  animation: severityFillIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+  transform-origin: left;
+}
+@keyframes severityFillIn {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+/* ── Live Feed Toast — Slide In ─────────────────────────────────────────── */
+@keyframes toastSlideIn {
+  from { transform: translateX(120%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+.alert {
+  animation: toastSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Audio Preview Player Polish ─────────────────────────────────────────── */
+audio.audio-preview {
+  width: 100%;
+  border-radius: var(--radius-md);
+  margin-top: 0.75rem;
+  accent-color: var(--rust);
+  background: var(--bg-elevated);
+}
+
+/* ── Results Page — Answer text typing entrance ─────────────────────────── */
+@keyframes answerFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.consensus-answer-text {
+  animation: answerFadeIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
+}
+
+/* ── Match Score Badge — Color by score ─────────────────────────────────── */
+.match-score-badge {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-xs);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* Highlight high match scores */
+.ghost-result-card[data-high-match] .match-score-badge {
+  background: rgba(82, 183, 136, 0.15);
+  color: var(--green);
+  border-color: rgba(82, 183, 136, 0.3);
+}
+
+/* ── WhatsApp Source Tag Glow ────────────────────────────────────────────── */
+@keyframes whatsappGlow {
+  0%, 100% { box-shadow: 0 0 6px rgba(37, 211, 102, 0.2); }
+  50%       { box-shadow: 0 0 12px rgba(37, 211, 102, 0.45); }
+}
+.echo-interactive-card[data-source="whatsapp"],
+.ghost-result-card .tag[style*="25d366"] {
+  animation: whatsappGlow 2.5s ease-in-out infinite;
+}
+
+/* ── Echoes Page — Empty State Bounce ────────────────────────────────────── */
+@keyframes emptyBounce {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-6px); }
+}
+.clean-empty-box {
+  animation: emptyBounce 3s ease-in-out infinite;
+}
+
+/* ── Record Form — Step card stagger entrance ───────────────────────────── */
+.form-section-card:nth-child(1) { animation-delay: 0.05s; }
+.form-section-card:nth-child(2) { animation-delay: 0.12s; }
+.form-section-card:nth-child(3) { animation-delay: 0.19s; }
+.form-section-card:nth-child(4) { animation-delay: 0.26s; }
+
+/* ── Category Pills — Bounce on select ──────────────────────────────────── */
+.category-select-pill {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              background 0.2s ease,
+              border-color 0.2s ease;
+}
+.category-select-pill.active {
+  animation: pillActivate 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.category-select-pill:hover {
+  transform: translateY(-2px);
+}
+
+/* ── Inspiration Chips — Hover glow ─────────────────────────────────────── */
+.inspiration-chip {
+  transition: transform 0.2s ease,
+              background 0.2s ease,
+              box-shadow 0.2s ease;
+}
+.inspiration-chip:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(224, 90, 58, 0.25);
+}
+
+/* ── Live Preview Card — Update shimmer ─────────────────────────────────── */
+@keyframes previewUpdateFlash {
+  0%   { border-color: rgba(224, 90, 58, 0.6); }
+  100% { border-color: var(--border); }
+}
+.preview-echo-card.updated {
+  animation: previewUpdateFlash 0.4s ease-out forwards;
+}
+
+/* ── Stats Ribbon — Hover tilt ──────────────────────────────────────────── */
+.stat-card {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.22s ease;
+}
+.stat-card:hover {
+  transform: translateY(-3px) rotate(-0.5deg);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+}
+
+/* ── Scrollbar Styling ───────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb {
+  background: rgba(224, 90, 58, 0.35);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(224, 90, 58, 0.55);
+}
+
+/* ── Selection color ─────────────────────────────────────────────────────── */
+::selection {
+  background: rgba(224, 90, 58, 0.3);
+  color: var(--text-primary);
+}
+
+/* ── Focus Ring — Accessible ─────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid rgba(224, 90, 58, 0.7);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ── Smooth hover transitions on all interactive elements ────────────────── */
+button, a, .btn, input, textarea, select {
+  transition-property: background, border-color, color, box-shadow, transform, opacity;
+  transition-duration: 0.2s;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}

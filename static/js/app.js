@@ -396,13 +396,27 @@ function initRecordForm() {
         const eq = document.getElementById('rec-equalizer');
         if (eq) eq.classList.remove('active');
         const status = document.getElementById('recording-status');
-        if (status) status.textContent = 'Ready to record';
+        if (status) status.textContent = 'Click mic to start recording';
         setTimeout(() => {
           window.location.href = `/echoes/${data.echo_id}`;
         }, 1200);
       } else if (data.status === 'confirmed') {
         showAlert('A similar Echo exists — confirmation count increased.', 'info');
         setTimeout(() => { window.location.href = '/echoes'; }, 1200);
+      } else if (data.status === 'needs_transcript') {
+        // Whisper failed — prompt user to type manually
+        showAlert('⚠️ Audio transcription failed. Please type your advice below and resubmit.', 'warning');
+        const transcriptArea = document.getElementById('transcript');
+        if (transcriptArea) {
+          transcriptArea.focus();
+          transcriptArea.placeholder = 'Whisper transcription failed — please type your advice here...';
+          transcriptArea.style.borderColor = 'rgba(229, 169, 82, 0.6)';
+          transcriptArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        // Store audio path for resubmit
+        if (data.audio_path) {
+          form.dataset.audioCached = data.audio_path;
+        }
       } else {
         showAlert(data.error || 'Could not save Echo. Please check fields.', 'error');
       }
@@ -636,5 +650,27 @@ document.addEventListener('DOMContentLoaded', () => {
         echoCountEl.textContent = count;
       }, 40);
     }
+  }
+
+  // Mark high-match result cards for green badge coloring
+  document.querySelectorAll('.ghost-result-card').forEach(card => {
+    const badge = card.querySelector('.match-score-badge');
+    if (badge) {
+      const pct = parseInt(badge.textContent, 10);
+      if (!isNaN(pct) && pct >= 80) {
+        card.dataset.highMatch = '1';
+      }
+    }
+  });
+
+  // Flash live preview card on transcript update
+  const transcriptArea = document.getElementById('transcript');
+  const previewCard = document.querySelector('.preview-echo-card');
+  if (transcriptArea && previewCard) {
+    transcriptArea.addEventListener('input', () => {
+      previewCard.classList.remove('updated');
+      void previewCard.offsetWidth; // force reflow to restart animation
+      previewCard.classList.add('updated');
+    });
   }
 });

@@ -1,34 +1,44 @@
 /**
  * recorder.js — MediaRecorder-based audio capture for Echo
  *
- * Usage: import this on record.html. It exposes a global EchoRecorder object.
- *
- * Flow:
- *   1. User clicks record button → starts microphone capture
- *   2. Blob chunks collected during recording
- *   3. On stop → blob assembled → audio preview shown
- *   4. Blob attached to the form for submission
+ * Robust rewrite with:
+ *  - Proper state machine (idle → recording → stopped)
+ *  - Permission denial UX
+ *  - Pulse ring + equalizer control
+ *  - Correct blob attachment for form submission
  */
 
 const EchoRecorder = (() => {
+  // ── State ────────────────────────────────────────────────────────────────
   let mediaRecorder = null;
   let chunks = [];
   let stream = null;
   let recordedBlob = null;
   let timerInterval = null;
   let seconds = 0;
+  let state = 'idle'; // idle | recording | stopped
 
-  // DOM refs (populated on init)
-  let recordBtn, statusEl, previewEl, timerEl, uploadInput;
+  // ── DOM refs (populated on init) ─────────────────────────────────────────
+  let recordBtn, statusEl, previewEl, timerEl;
+  let pulseRing, equalizer;
 
+  // ── Helpers ───────────────────────────────────────────────────────────────
   function formatTime(secs) {
     const m = Math.floor(secs / 60).toString().padStart(2, '0');
     const s = (secs % 60).toString().padStart(2, '0');
     return `${m}:${s}`;
   }
 
+  function setStatus(text, active = false) {
+    if (!statusEl) return;
+    statusEl.textContent = text;
+    if (active) statusEl.classList.add('active');
+    else statusEl.classList.remove('active');
+  }
+
   function startTimer() {
     seconds = 0;
+    if (timerEl) timerEl.textContent = '00:00';
     timerInterval = setInterval(() => {
       seconds++;
       if (timerEl) timerEl.textContent = formatTime(seconds);
@@ -40,107 +50,164 @@ const EchoRecorder = (() => {
     timerInterval = null;
   }
 
+  function setRecordingUI(isRecording) {
+    if (!recordBtn) return;
+
+    if (isRecording) {
+      recordBtn.classList.add('recording');
+      recordBtn.title = 'Stop recording';
+      recordBtn.innerHTML = `
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+          <rect x="6" y="6" width="12" height="12" rx="2"/>
+        </svg>`;
+      if (pulseRing) pulseRing.classList.add('active');
+      if (equalizer) equalizer.classList.add('active');
+    } else {
+      recordBtn.classList.remove('recording');
+      recordBtn.title = 'Start voice recording';
+      recordBtn.innerHTML = `
+        <svg class="record-mic-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+          <line x1="12" x2="12" y1="19" y2="22"/>
+        </svg>`;
+      if (pulseRing) pulseRing.classList.remove('active');
+      if (equalizer) equalizer.classList.remove('active');
+    }
+  }
+
+  // ── Core recording logic ──────────────────────────────────────────────────
   async function startRecording() {
+    if (state === 'recording') return;
+
+    // Check MediaRecorder support
+    if (typeof MediaRecorder === 'undefined') {
+      setStatus('❌ Browser does not support recording. Use Chrome or Firefox.');
+      return;
+    }
+
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch (err) {
-      alert('Microphone access denied. Please allow microphone access and try again.');
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        setStatus('❌ Microphone access denied. Enable in browser settings and refresh.');
+      } else if (err.name === 'NotFoundError') {
+        setStatus('❌ No microphone found. Connect a mic and refresh.');
+      } else {
+        setStatus(`❌ Could not access microphone: ${err.message}`);
+      }
+      console.warn('[EchoRecorder] getUserMedia error:', err);
       return;
     }
 
     chunks = [];
     recordedBlob = null;
+    state = 'recording';
 
-    // Prefer webm/opus for broad browser support; fall back to whatever is available
-    const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-      ? 'audio/webm;codecs=opus'
-      : MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '';
+    // Pick best supported MIME type
+    const mimeType = [
+      'audio/webm;codecs=opus',
+      'audio/webm',
+      'audio/ogg;codecs=opus',
+      'audio/ogg',
+      '',
+    ].find(t => t === '' || MediaRecorder.isTypeSupported(t));
 
-    mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
+    try {
+      mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
+    } catch (err) {
+      console.warn('[EchoRecorder] MediaRecorder init error:', err);
+      mediaRecorder = new MediaRecorder(stream);
+    }
 
     mediaRecorder.ondataavailable = (e) => {
-      if (e.data.size > 0) chunks.push(e.data);
+      if (e.data && e.data.size > 0) chunks.push(e.data);
     };
 
     mediaRecorder.onstop = () => {
-      recordedBlob = new Blob(chunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+      const blobType = mediaRecorder.mimeType || 'audio/webm';
+      recordedBlob = new Blob(chunks, { type: blobType });
       const url = URL.createObjectURL(recordedBlob);
 
       if (previewEl) {
         previewEl.src = url;
         previewEl.classList.remove('hidden');
-      }
-
-      // Attach blob to the hidden file input so the form picks it up
-      if (uploadInput) {
-        const file = new File([recordedBlob], 'echo-recording.webm', {
-          type: recordedBlob.type,
-        });
-        const dt = new DataTransfer();
-        dt.items.add(file);
-        uploadInput.files = dt.files;
+        previewEl.style.display = 'block';
       }
 
       stopTimer();
-      if (statusEl) statusEl.textContent = `Recording saved (${formatTime(seconds)})`;
+      state = 'stopped';
+      setStatus(`✓ Recording saved — ${formatTime(seconds)}. Ready to submit.`, false);
+      setRecordingUI(false);
     };
 
-    mediaRecorder.start(250); // collect chunks every 250ms
-    startTimer();
+    mediaRecorder.onerror = (err) => {
+      console.warn('[EchoRecorder] MediaRecorder error:', err);
+      stopRecording();
+      setStatus('❌ Recording error. Try again.');
+    };
 
-    // Update UI
-    if (recordBtn) {
-      recordBtn.classList.add('recording');
-      recordBtn.innerHTML = '⏹';
-      recordBtn.title = 'Stop recording';
-    }
-    if (statusEl) {
-      statusEl.textContent = 'Recording…';
-      statusEl.classList.add('active');
-    }
-    const recorderArea = document.querySelector('.recorder-area');
-    if (recorderArea) recorderArea.classList.add('recording');
+    mediaRecorder.start(200); // collect every 200ms
+    startTimer();
+    setRecordingUI(true);
+    setStatus('🔴 Recording… Click stop when done.', true);
   }
 
   function stopRecording() {
+    if (state !== 'recording') return;
+
     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-      mediaRecorder.stop();
+      try { mediaRecorder.stop(); } catch (e) { /* ignore */ }
     }
     if (stream) {
       stream.getTracks().forEach(t => t.stop());
       stream = null;
     }
 
-    // Update UI
-    if (recordBtn) {
-      recordBtn.classList.remove('recording');
-      recordBtn.innerHTML = '🎙';
-      recordBtn.title = 'Start recording';
-    }
-    if (statusEl) statusEl.classList.remove('active');
-    const recorderArea = document.querySelector('.recorder-area');
-    if (recorderArea) recorderArea.classList.remove('recording');
+    stopTimer();
+    // onstop will fire and update UI/state
   }
 
-  function init({ recordBtnId, statusId, previewId, timerId, uploadInputId }) {
-    recordBtn   = document.getElementById(recordBtnId);
-    statusEl    = document.getElementById(statusId);
-    previewEl   = document.getElementById(previewId);
-    timerEl     = document.getElementById(timerId);
-    uploadInput = document.getElementById(uploadInputId);
+  // ── Public API ────────────────────────────────────────────────────────────
+  function init({ recordBtnId, statusId, previewId, timerId }) {
+    recordBtn = document.getElementById(recordBtnId);
+    statusEl  = document.getElementById(statusId);
+    previewEl = document.getElementById(previewId);
+    timerEl   = document.getElementById(timerId);
 
-    if (!recordBtn) return;
+    // Optional visual elements
+    pulseRing = document.getElementById('mic-pulse-ring');
+    equalizer = document.getElementById('rec-equalizer');
 
-    recordBtn.addEventListener('click', () => {
-      if (!mediaRecorder || mediaRecorder.state === 'inactive') {
-        startRecording();
-      } else {
+    if (!recordBtn) {
+      console.warn('[EchoRecorder] Record button not found:', recordBtnId);
+      return;
+    }
+
+    // Single, clean click handler
+    recordBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (state === 'recording') {
         stopRecording();
+      } else {
+        // Reset preview if re-recording
+        if (previewEl) {
+          previewEl.src = '';
+          previewEl.classList.add('hidden');
+        }
+        state = 'idle';
+        startRecording();
       }
     });
+
+    setStatus('Click mic to start recording');
+    console.log('[EchoRecorder] Initialized successfully');
   }
 
   function getBlob() { return recordedBlob; }
+  function getState() { return state; }
 
-  return { init, getBlob, startRecording, stopRecording };
+  return { init, getBlob, getState, startRecording, stopRecording };
 })();
